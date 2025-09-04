@@ -1,0 +1,3 @@
+- Tạo server block (virtual host) riêng trong Nginx.
+- Trang web mới này hiển thị nội dung khác hẳn trang mặc định.
+- Truy cập được qua http://localhost:8081 (hoặc port khác tùy bạn đặt)
