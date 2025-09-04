@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  nginx:
+    build: .
+    container_name: day_0_nginx
+    ports:
+      - "2800:80"   # truy cập localhost:8080 trên Windows
+    volumes:
+      - ./html:/usr/share/nginx/html:ro
+      - ./default.conf:/etc/nginx/conf.d/default.conf:ro
