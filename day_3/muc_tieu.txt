@@ -1,0 +1,4 @@
+Tạo Virtual Host theo tên miền (server_name).
+Khi bạn gõ http://site1.local:8080 thì Nginx trả về site 1.
+Khi bạn gõ http://site2.local:8080 thì Nginx trả về site 2.
+(Nghĩa là lúc này không phân biệt bằng port nữa, mà phân biệt bằng server_name).
