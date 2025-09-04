@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  nginx:
+    build: .
+    container_name: day_1_nginx
+    ports:
+      - "2810:80"
+    volumes:
+      - ./nginx/logs:/var/log/nginx

@@ -1,0 +1,4 @@
+- Truy cập được bên trong container Nginx đã tạo ở Day 0.
+- Liệt kê được cấu trúc file cấu hình Nginx trong container.
+- Kiểm tra syntax config (`nginx -t`) và reload Nginx không lỗi.
+- Sau khi reload, site vẫn chạy bình thường ở `http://localhost:2810`.

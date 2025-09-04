@@ -1,0 +1,40 @@
+
+ ============= Dùng lệnh để xem container Nginx đang chạy.=======
+  - docker ps
+
+ =============== dung lenh sau de vao shell ============
+  - docker exec -it <container_name> bash
+  - hoac vao container cua docker destop, vao exec cua container mong muon
+
+ - nginx -t        // kiem tra cu phap nginx xem co loi khong
+ - nginx -s reload   // reload ngix
+
+======================== cac file cau hinh cua nginx =======
+- phan biet duoc:
+    + /etc/nginx // day la thu muc chua cau hinh tong
+    + /etc/nginx/conf.d // da la thu muc chua cac cau hinh rieng chua tung server (block)
+
+- Cấu trúc phân cấp trong Nginx (từ cao xuống thấp)
+main (toàn bộ nginx.conf)
+├── http
+│   ├── server
+│   │   ├── location
+│   │   └── if / nested blocks
+└── events
+
+- phan biet duoc block nao duoc dat o dau, de cau hinh cho dung
+
+| Block    | Được đặt ở đâu?            | Cho phép trong `conf.d/`? | Ghi chú                  |
+| -------- | -------------------------- | ------------------------- | ------------------------ |
+| `events` | **Chỉ trong `nginx.conf`** | ❌ Không                   | Quản lý kết nối cấp thấp |
+| `http`   | **Chỉ trong `nginx.conf`** | ❌ Không                   | Bao toàn bộ HTTP server  |
+| `stream` | Chỉ trong `nginx.conf`     | ❌ Không                   | Cho TCP proxy            |
+| `mail`   | Chỉ trong `nginx.conf`     | ❌ Không                   | Proxy mail (hiếm dùng)   |
+
+
+
+| Block      | Được phép nằm trong `conf.d`?               | Ghi chú                |
+| ---------- | ------------------------------------------- | ---------------------- |
+| `server`   | ✅ Có                                        | Dùng để tách từng site |
+| `location` | ✅ Có (bên trong server)                     | Không dùng riêng lẻ    |
+| `upstream` | ✅ Có (nếu include đúng vị trí trong `http`) | Tùy theo use case      |
