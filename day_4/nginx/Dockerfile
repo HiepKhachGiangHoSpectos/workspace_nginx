@@ -2,6 +2,7 @@
 FROM nginx:alpine
 
 # Xoá default config nếu muốn (không bắt buộc)
+# || true = nếu lệnh rm lỗi (ví dụ file không tồn tại) thì cũng không dừng build image.
 RUN rm /etc/nginx/conf.d/default.conf || true
 
 # Copy file cấu hình reverse proxy vào container

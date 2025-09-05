@@ -29,5 +29,9 @@ Giải thích:
 neu chi thay doi code hoac docker-compose.yml, thi chay lenh: docker compose up  -d
 neu thay doi: thai chay lenh : docker compose up --build -d
     - file Dockerfile
-    - Thay đổi code nằm trong thư mục build context được COPY vào image.
+    - Thay đổi code nằm trong thư mục build context được COPY vào image. (vi du reverse.conf,...)
     - Hoặc chắc chắn muốn rebuild cho sạch.
+
+============================
+Ta co the dung bind mount, khi nay, moi khi thay doi o "node_app/app.js", thay doi se duoc sync sang ben container.
+Tuy nhien do container van luu tien trinh cu, nen khi reload lai trinh duyet, se khong the thay thay doi)

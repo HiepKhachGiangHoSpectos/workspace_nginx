@@ -3,6 +3,8 @@ services:
   nodeapp:
     build: ./node_app
     container_name: node_app
+    volumes:
+      - ./node_app:/app
     expose:
       - "3000"   # chỉ mở trong internal network docker
   nginx:
@@ -13,4 +15,4 @@ services:
     volumes:
       - ./nginx/reverse.conf:/etc/nginx/conf.d/reverse.conf:ro
     depends_on:
-      - nodeapp
+      - nodeapp # tai vi service nginx can nodeapp service de phuc vu ra ben ngoai

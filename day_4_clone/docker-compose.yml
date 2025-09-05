@@ -1,0 +1,18 @@
+version: '3.8'
+services:
+  nodeapp_service:
+    build: ./node_app_clone
+    container_name: container_name_nodeapp
+    volumes:
+      - ./node_app_clone:/app
+    expose:
+      - "3000"   # chỉ mở trong internal network docker
+  nginx_service:
+    build: ./nginx_clone
+    container_name: container_name_nginx
+    ports:
+      - "8080:80"   # mở port ra host
+    volumes:
+      - ./nginx_clone/server.conf:/etc/nginx/conf.d/server.conf:ro
+    depends_on:
+      - nodeapp_service # tai vi service nginx can nodeapp_service service de phuc vu ra ben ngoai

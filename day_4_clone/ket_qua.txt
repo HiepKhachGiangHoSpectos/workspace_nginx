@@ -1,0 +1,80 @@
++ Trong docker-compose
+- Mỗi docker-compose.yml tạo ra một network mặc định riêng.
+- Các service trong cùng một file tự động được nối chung vào network đó → có thể gọi nhau bằng **tên service** (không phải container_name).
+- Hai container chạy từ hai file compose khác nhau mặc định **không nhìn thấy nhau**.
+
+=> Muốn hai container ở hai compose khác nhau nói chuyện, có hai cách chính:
+
+Cách 1 – Đưa về chung 1 network:
+- Tạo một network chung:
+  networks:
+    shared-net:
+- Ở cả hai file compose, khai báo `networks: - shared-net` cho service muốn giao tiếp.
+- Docker sẽ nối cả hai container vào cùng một mạng này → gọi nhau được qua **tên service**.
+
+Cách 2 – Dùng IP/port host:
+- Publish port container A ra host (ports:)
+- Container B truy cập qua `host.docker.internal:port` (Windows/Mac) hoặc IP host (Linux).
+- Cách này “đi vòng ra ngoài” nên không tối ưu.
+
+==================
+Hiện tại mình đã cấu hình được:
+- 1 container (nginx server) có thể phục vụ nhiều URL, chung port host (8080).
+- Nhưng không thể có nhiều container **cùng publish** ra chung port host (8080).
+- Chưa biết cách cho container “container_name_nodeapp” giao tiếp trực tiếp với container “node_app” (vì hai compose khác nhau).
+
+==================== KẾT QUẢ – NGUYÊN TẮC PORT & DOMAIN ====================
+
+1. Mỗi port trên host là duy nhất
+   - Trên máy thật (host), mỗi cổng (8080, 80, 3000…) chỉ do **một process** hoặc container lắng nghe.
+   - Nếu hai container cùng publish ra cổng host 8080 (`8080:80` và `8080:80`) thì container thứ hai sẽ báo “port already allocated”.
+
+2. Nhiều domain cùng một port
+   - Có thể có nhiều domain (site1.local, site2.local…) cùng port (8080) nếu có **reverse proxy** (Nginx/Traefik) đứng trước.
+   - Cơ chế Virtual Host: trình duyệt gửi Host header, Nginx nhìn Host header để chọn server block.
+
+3. Container trong mạng nội bộ Docker
+   - `expose: "3000"` nghĩa là port 3000 chỉ mở **trong internal network**, không ra host.
+   - Service khác trong cùng docker-compose có thể truy cập `http://<service_name>:3000` mà không cần publish ra host.
+   - Vì thế `nodeapp` không có port host, nhưng Nginx vẫn proxy được tới `http://nodeapp:3000`.
+
+4. Vì sao `nginx` `depends_on` `nodeapp`
+   - `depends_on` chỉ để Docker khởi động nodeapp trước nginx, tránh lỗi proxy tới service chưa lên.
+
+5. Cách quản lý nhiều site / app
+   - Nhiều site + 1 port duy nhất → Dùng 1 Nginx reverse proxy, nhiều server block (Day 3).
+   - Nhiều app riêng biệt → Dùng 1 reverse proxy (Traefik/Nginx) đứng trước, route domain/đường dẫn tới các container.
+
+6. Đặt vấn đề (chưa học – sẽ học ở Day 5+)
+   - Reverse proxy nâng cao: nhiều backend, load balancing.
+   - Cache, gzip, SSL/TLS termination.
+   - Giới hạn truy cập, rate limiting, bảo vệ API.
+   - External network, quản lý certificate tự động (Let’s Encrypt với nginx/Traefik).
+
+==================== KẾT LUẬN ====================
+- 1 cổng host = 1 container (hoặc process) lắng nghe.
+- Nhiều domain cùng port = nhờ reverse proxy đọc Host header.
+- Container nội bộ giao tiếp qua **tên service + port expose**, không cần port host.
+- `depends_on` đảm bảo thứ tự khởi động, không phải quan hệ cha – con.
+- Sắp tới sẽ học reverse proxy nâng cao để hiểu route nhiều app / load balancing / SSL.
+
+Sơ đồ:
+
+                    ┌────────────────────────────┐
+                    │        Người dùng           │
+                    │   (Browser / Client App)    │
+                    └─────────────┬──────────────┘
+                                  │  (HTTP/HTTPS)
+                                  ▼
+                     ┌─────────────────────────┐
+                     │   Gateway / Reverse Proxy│
+                     │ (Nginx / Traefik / API GW)│
+                     └─────────────┬────────────┘
+        (Docker internal network)  │
+        ┌──────────────────────────┴──────────────────────────┐
+        │                                                     │
+┌────────────────┐    ┌────────────────┐    ┌────────────────┐
+│  Service A     │    │  Service B     │    │  Service C     │
+│ (NodeJS API)   │    │ (MySQL nội bộ) │    │ (Worker Queue) │
+│ expose 3000    │    │ expose 3306    │    │ expose 5672    │
+└────────────────┘    └────────────────┘    └────────────────┘
