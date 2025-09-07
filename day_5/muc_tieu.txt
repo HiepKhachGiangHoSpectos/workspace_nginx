@@ -1,0 +1,9 @@
+Mục tiêu (thử thách)
+
+Hiểu Nginx logs (access.log + error.log).
+
+Biết cách xem log bên trong container.
+
+Biết cách mount log ra ngoài host để dễ đọc bằng editor.
+
+Thử thay đổi format log cơ bản.

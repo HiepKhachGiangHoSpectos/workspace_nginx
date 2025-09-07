@@ -1,0 +1,35 @@
+
+==================== KINH NGHIỆM DAY 5 – LOGGING (NGINX) ====================
+
+1. Hai directive cốt lõi:
+   access_log /var/log/nginx/access.log;
+   error_log  /var/log/nginx/error.log;
+
+   - access_log: nơi ghi lại mọi request gửi vào Nginx.
+   - error_log: nơi ghi lại lỗi của Nginx.
+
+2. Mặc định Nginx container đã có sẵn hai file này trong /var/log/nginx/.
+   - Không khai báo cũng được, nó dùng mặc định.
+   - Muốn đổi vị trí hoặc format thì tự khai báo.
+
+3. Cách xem log:
+   - docker logs <container_name_nginx> sẽ hiển thị log (do container forward stdout/stderr).
+   - Hoặc vào container: docker exec -it <container_name_nginx> sh
+     rồi: tail -f /var/log/nginx/access.log
+
+4. Đưa log ra host (để dễ xem bằng editor):
+   volumes:
+     - ./logs:/var/log/nginx
+   => Log ghi trong container sẽ xuất hiện ở thư mục ./logs ngoài host.
+
+5. Đổi format log (nâng cao):
+   log_format minimal '$remote_addr - $request';
+   access_log /var/log/nginx/access.log minimal;
+
+   (Phần này chưa cần nhớ, sau này đụng mới tra lại)
+
+==================== KẾT LUẬN ====================
+- Log mặc định đã có, chỉ cần biết chỗ xem.
+- Muốn đưa ra host thì mount volume ./logs:/var/log/nginx.
+- Muốn đổi format thì thêm log_format + access_log ... <formatname>;
+- error_log và access_log là hai thứ quan trọng nhất cần nhớ.
