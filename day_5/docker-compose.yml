@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  nginx:
+    build: ./nginx
+    container_name: day_5_nginx
+    ports:
+      - "2850:80"
+    volumes:
+      - ./html:/usr/share/nginx/html
+      # mount log ra host (tạo sẵn thư mục logs)
+      - ./logs:/var/log/nginx
