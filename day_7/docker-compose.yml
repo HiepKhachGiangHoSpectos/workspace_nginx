@@ -1,0 +1,7 @@
+version: '3.8'
+services:
+  nginx:
+    build: ./nginx
+    container_name: day_7_nginx
+    ports:
+      - "2870:80"    # truy cập http://localhost:2870
