@@ -1,0 +1,34 @@
+| Tầng                       | Ví dụ                  | Ưu điểm                          | Nhược điểm                                 |
+| -------------------------- | ---------------------- | -------------------------------- | ------------------------------------------ |
+| **Client**                 | Cache trình duyệt      | Giảm request lên server          | Khó kiểm soát khi cần “force refresh”      |
+| **Server (reverse proxy)** | Nginx `proxy_cache`    | Giảm tải app                     | Phải invalidate cache khi dữ liệu thay đổi |
+| **App**                    | Redis, in-memory cache | Kiểm soát logic tùy ý            | Tốn RAM/Redis, phức tạp hơn                |
+| **CDN**                    | Cloudflare, Akamai     | Giảm tải toàn hệ thống, gần user | Cấu hình phức tạp, tốn phí                 |
+
+
+===============================
+Nếu cache ở server / CDN, có thể dùng:
+ETag / Last-Modified để browser tự kiểm tra lại.
+API purge/invalidate ở Nginx/CDN/Redis khi deploy.
+Cache-busting (đổi tên file/hàm, thêm hash) khi build.
+
+
+Lưu ý quan trọng
+Gzip là nén nội dung, không phải cache. Có thể bật Gzip + cache đồng thời để tối ưu nhất.
+Khi test cache, cần refresh với Ctrl+F5 hoặc tick “Disable cache” trong DevTools để chắc chắn.
+
+
+Cách kiểm tra
+Kiểm tra Gzip:
+– Mở DevTools → tab Network → click một file → Response headers → tìm Content-Encoding: gzip.
+
+Kiểm tra cache:
+– Nếu thấy trong cột Size ghi (disk cache) hoặc (memory cache) → đang dùng cache của trình duyệt.
+– Trong Request headers có thể thấy Cache-Control: no-cache khi bạn
+ tick “Disable cache” → nghĩa là trình duyệt buộc phải xác nhận lại với
+ server, chứ không hẳn “không dùng cache server”. Server có thể trả 304 Not Modified để tiết kiệm băng thông.
+
+
+Ý nghĩa thực hành
+Khi Disable cache: test tình huống khách hàng mới (không có cache).
+Khi bỏ Disable cache: test tình huống khách quay lại (browser có cache, tải nhanh).

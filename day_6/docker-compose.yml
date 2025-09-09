@@ -1,0 +1,9 @@
+version: '3.8'
+services:
+  nginx:
+    build: ./nginx
+    container_name: nginx_gzip_cache
+    ports:
+      - "2860:80"    # truy cập http://localhost:2860
+    volumes:
+      - ./html:/usr/share/nginx/html:ro
