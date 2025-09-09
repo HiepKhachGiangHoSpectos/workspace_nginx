@@ -1,0 +1,69 @@
+{
+  "name": "Day 9",
+  "message": [
+    {
+      "name": "Day6",
+      "message": "This is JSON test for gzip and cache",
+      "items": [1, 2, 3, 4, 5]
+    },
+    {
+      "name": "Day6",
+      "message": "This is JSON test for gzip and cache",
+      "items": [
+        {
+          "name": "Day6",
+          "message": "This is JSON test for gzip and cache",
+          "items": [1, 2, 3, 4, 5]
+        },
+        {
+          "name": "Day6",
+          "message": "This is JSON test for gzip and cache",
+          "items": [1, 2, 3, 4, 5]
+        },
+        {
+          "name": "Day6",
+          "message": "This is JSON test for gzip and cache",
+          "items": [
+            {
+              "name": "Day6",
+              "message": "This is JSON test for gzip and cache",
+              "items": [1, 2, 3, 4, 5]
+            },
+            {
+              "name": "Day6",
+              "message": "This is JSON test for gzip and cache",
+              "items": [1, 2, 3, 4, 5]
+            },
+            {
+              "name": "Day6",
+              "message": "This is JSON test for gzip and cache",
+              "items": [1, 2, 3, 4, 5]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Day6",
+      "message": "This is JSON test for gzip and cache",
+      "items": [1, 2, 3, 4, 5]
+    }
+  ],
+  "items": [
+    {
+      "name": "Day6",
+      "message": "This is JSON test for gzip and cache",
+      "items": [1, 2, 3, 4, 5]
+    },
+    {
+      "name": "Day6",
+      "message": "This is JSON test for gzip and cache",
+      "items": [1, 2, 3, 4, 5]
+    },
+    {
+      "name": "Day6",
+      "message": "This is JSON test for gzip and cache",
+      "items": [1, 2, 3, 4, 5]
+    }
+  ]
+}

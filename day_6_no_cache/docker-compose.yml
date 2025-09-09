@@ -1,0 +1,10 @@
+version: '3.8'
+services:
+  nginx:
+    build: ./nginx
+    container_name: day_6_nginx_error
+    ports:
+      - "2865:80"    # truy cập http://localhost:2865
+    volumes:
+      - ./html:/usr/share/nginx/html:ro
+      - ./static:/usr/share/nginx/static:ro

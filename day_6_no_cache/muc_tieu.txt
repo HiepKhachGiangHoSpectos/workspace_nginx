@@ -1,0 +1,50 @@
+Day 6 – Gzip & Cache cơ bản
+🆘 Vấn đề thực tế
+
+Khi người dùng truy cập web, HTML/CSS/JS được tải nguyên xi (chưa nén) → dung lượng lớn → tải chậm.
+
+File tĩnh (ảnh, CSS, JS…) mỗi lần user tải trang đều request mới từ server → tốn băng thông & làm server phải phục vụ lại.
+
+Tốc độ chậm ảnh hưởng SEO, UX, chi phí hạ tầng.
+
+📌 Giải pháp chuẩn của web server:
+
+Nén gzip nội dung text-based (HTML, CSS, JS, JSON…) để giảm kích thước truyền.
+
+Cache-Control cho phép trình duyệt cache file tĩnh lâu dài → user quay lại không phải tải lại.
+
+🎯 Mục tiêu Day 6
+
+Biết cách bật gzip trong Nginx để nội dung text nhỏ hơn.
+
+Biết cách set Cache-Control cho file tĩnh để trình duyệt cache.
+
+Biết kiểm tra kết quả bằng DevTools.
+
+
+
+# Day 6 – Bật Gzip và Cache cơ bản trong Nginx
+
+## Đặt vấn đề
+Trang web của bạn trả về HTML/CSS/JS kích thước lớn → tốn băng thông và tải chậm.
+Muốn tăng tốc, thường:
+- **Nén gzip** để giảm dung lượng response.
+- **Thiết lập cache-control** để browser lưu lại static file, giảm request lần sau.
+
+## Mục tiêu
+- Bật gzip cho HTML/CSS/JS.
+- Thiết lập cache-control cơ bản cho static file.
+- Kiểm tra bằng DevTools hoặc `curl -I` xem header `Content-Encoding` và `Cache-Control`.
+
+## Các bước làm
+1. Tạo file HTML test trong `day_6/html/index.html`.
+2. Viết file cấu hình Nginx `day_6/nginx/gzip_cache.conf` bật gzip + cache.
+3. Tạo `Dockerfile` cho Nginx trong `day_6/nginx/`.
+4. Viết `docker-compose.yml` để chạy container.
+5. Mở browser hoặc dùng `curl -I` kiểm tra header.
+
+## Kết quả mong đợi
+- Khi truy cập `http://localhost:2865` bạn thấy trang HTML bình thường.
+- Dùng DevTools hoặc `curl -I` sẽ thấy:
+  - Có `Content-Encoding: gzip`.
+  - Có `Cache-Control: public, max-age=...` cho static file.
