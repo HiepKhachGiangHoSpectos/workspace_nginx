@@ -1,0 +1,30 @@
+================= dat van de ==============
+Tình huống 1 – Client phải biết IP backend:
+Người dùng hoặc app phải kết nối trực tiếp đến từng IP/port backend. Khi server đổi IP, thêm server mới hoặc đổi port thì client lỗi ngay. Backend cũng lộ ra internet, rất nguy hiểm về bảo mật.
+
+Tình huống 2 – Server quá tải, không chia tải được:
+Một backend nhận toàn bộ traffic, CPU/RAM đầy → treo. Trong khi các server khác vẫn nhàn rỗi. Người dùng bị lỗi “502/Timeout” thường xuyên.
+
+Tình huống 3 – Không có điểm tập trung cấu hình:
+Mỗi backend phải tự cấu hình SSL, header, cache, log… lặp lại trên nhiều máy. Khi cần thay đổi policy (ví dụ thêm header bảo mật, redirect), phải sửa từng server, dễ sai sót.
+
+Tình huống 4 – Rolling update/downtime khó khăn:
+Khi muốn nâng cấp ứng dụng, bạn phải tắt hẳn server → downtime. Không có cơ chế “rút server khỏi pool” để deploy, người dùng thấy lỗi ngay trong lúc nâng cấp.
+
+Tình huống 5 – Không kiểm soát được health check:
+Client vẫn đổ request vào server đã chết hoặc đang lỗi vì không có cơ chế kiểm tra sức khoẻ server trước khi gửi request.
+
+5 tình huống trên cho thấy: nếu không có Proxy & Load Balancing, hệ thống khó mở rộng, khó bảo mật, khó nâng cấp và trải nghiệm người dùng kém.
+Proxy & Load Balancing giúp che backend, phân tải hợp lý, tập trung cấu hình bảo mật, health-check tự động, và hỗ trợ nâng cấp không downtime.
+
+
+
+================= Mục tiêu (Thử thách) ===============
+
+Hiểu rõ cách Nginx hoạt động như reverse proxy.
+
+Cấu hình Nginx làm load balancer cho ít nhất 2 backend (round robin, ip_hash).
+
+Biết cách cấu hình các directive cơ bản: proxy_pass, upstream, proxy_set_header, keepalive.
+
+Thử nghiệm health-check đơn giản (ví dụ bỏ một server ra khỏi upstream, xem Nginx phản ứng).
