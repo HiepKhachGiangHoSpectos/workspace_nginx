@@ -15,3 +15,26 @@
 | -------------------------------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | **1. Chỉ thêm mảnh conf** (viết `server {}` / `upstream`…)           | Bỏ `http{}`/`events{}` ra, copy file vào `/etc/nginx/conf.d/…` | - Ít code, tận dụng file gốc của Nginx. <br>- Tương thích với update image mới, ít vỡ config. <br>- Quen thuộc với cách deploy nhiều site. | - Không chỉnh được các directive global như `worker_processes`, `events`… <br>- Phải theo cấu trúc có sẵn của Nginx image. | Bạn chỉ cần reverse proxy, thêm site, SSL… <br>Không đụng đến cấu trúc tổng thể của Nginx.                          |
 | **2. Override full config** (viết nguyên file `events{}` + `http{}`) | Copy đè file vào `/etc/nginx/nginx.conf`                       | - Toàn quyền cấu hình, muốn gì cũng được. <br>- Đúng 100% theo file bạn đang học/làm lab. <br>- Không phụ thuộc file gốc của image.        | - Phải tự include mọi thứ (mime.types, log…). <br>- Khi update image mới phải check lại file.                              | Khi bạn đang học/lab, hoặc muốn kiểm soát toàn bộ (thay đổi worker, event, include…), không dùng cấu hình mặc định. |
+
+
+============== ngoai le ==============
+-----Gia su Dockerfile cua mot service nao do co noi dung nhu sau ----
+FROM node:18-alpine
+WORKDIR /app
+COPY package.json .
+RUN npm install --production
+RUN npm install -g nodemon
+COPY . .
+CMD ["nodemon", "app.js"]
+
+---- sau do docker-compose.yml co noi dung la ----
+    volumes:
+      - ./folder_of_service:/app
+
+Sau do chay lenh "docker compose up --build -d"
+=> oke co container, nhung khong co module o trong packege.json
+nguyen nhan:
++ Bạn docker build ./server_1 → trong Dockerfile có cài npm install nên trong image có /app/node_modules đầy đủ.
++ Nhưng khi docker-compose up bạn lại volumes: - ./server_1:/app → thư mục host (chưa có node_modules) đè lên toàn bộ /app của container → node_modules biến mất.
++Kết quả: container khởi động nhưng trong /app không có node_modules, dẫn tới Cannot find module 'express'.
+
