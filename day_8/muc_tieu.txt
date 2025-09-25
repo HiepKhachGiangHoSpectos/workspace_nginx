@@ -21,7 +21,9 @@ Một backend nhận toàn bộ traffic, CPU/RAM đầy → treo. Trong khi các
                 * least_conn hoat dong oke (luan phien gui request den cac server
                 * nhung trong truong hop mot server treo, phai co cach nao do "han che gui request" den server nay
                 * phai phan biet duoc dau la code lam tac nghen cpu, han che viet code nay
-
+ ==> da lam duoc:
+                * Server A treo, da gui duoc request toi server B
+                * chia api, nhung api nao lau => tao ra mot url rieng, api nao nhanh, tao ra mot url rieng
 Tình huống 3 – Không có điểm tập trung cấu hình:
 Mỗi backend phải tự cấu hình SSL, header, cache, log… lặp lại trên nhiều máy. Khi cần thay đổi policy (ví dụ thêm header bảo mật, redirect), phải sửa từng server, dễ sai sót.
 

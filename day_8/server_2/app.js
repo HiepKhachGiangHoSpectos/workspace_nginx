@@ -11,7 +11,7 @@ app.get('/slow', (req, res) => {
     setTimeout(() => {
         console.log(`Sending response at ${new Date().toISOString()} on Server 2`);
         res.send('Server 2 took 15 seconds');
-    }, 15);
+    }, 15000);
 });
 
 // route CPU nặng

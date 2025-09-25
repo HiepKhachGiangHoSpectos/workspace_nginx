@@ -20,7 +20,7 @@ app.get('/cpu', (req, res) => {
     let now = Date.now() + 15000; // 15s
     while (Date.now() < now) {
     }
-    res.send('CPU server 2 busy done!');
+    res.send('CPU server 1 busy done!');
 });
 
 const PORT = 8081;
