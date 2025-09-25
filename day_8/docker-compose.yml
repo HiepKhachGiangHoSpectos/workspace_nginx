@@ -8,6 +8,7 @@ services:
       - "2881:8081"
     volumes:
       - ./server_1:/app
+      - /app/node_modules
 
   server_2:
     build: server_2
@@ -16,6 +17,7 @@ services:
       - "2882:8082"
     volumes:
       - ./server_2:/app
+      - /app/node_modules
 
   nginx:
     build: nginx
