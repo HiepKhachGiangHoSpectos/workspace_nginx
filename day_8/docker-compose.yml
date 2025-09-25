@@ -4,8 +4,8 @@ services:
   server_1:
     build: server_1
     container_name: server_08_01
-    ports:
-      - "2881:8081"
+    expose:
+      - "2881"
     volumes:
       - ./server_1:/app
       - /app/node_modules
@@ -13,8 +13,8 @@ services:
   server_2:
     build: server_2
     container_name: server_08_02
-    ports:
-      - "2882:8082"
+    expose:
+      - "2882"
     volumes:
       - ./server_2:/app
       - /app/node_modules
