@@ -4,6 +4,23 @@ Người dùng hoặc app phải kết nối trực tiếp đến từng IP/port
 
 Tình huống 2 – Server quá tải, không chia tải được:
 Một backend nhận toàn bộ traffic, CPU/RAM đầy → treo. Trong khi các server khác vẫn nhàn rỗi. Người dùng bị lỗi “502/Timeout” thường xuyên.
+(mo mot tab, truy cap vap
+ + http://localhost:2880/cpu
+    - sau do mo terminal, chay lenh: seq 1 10 | xargs -I {} -P 10 sh -c 'curl -s http://localhost:2880/ | flock -x /tmp/lockfile echo "Request {}: $(cat)"'
+       => khi nay ta thay :
+            * tab (browser tra ve "CPU server 2 busy done!"
+            * toan bo request cua hien thi "Hello from Server 1". sau do moi den "Hello from Server 2"
+       =>> ket luan: van co nhung request duoc dieu huong toi server 2, va server 2 dang "treo" => toan bo request den server 2 se phai cho
+ + http://localhost:2880/slow
+    - sau do mo terminal, chay lenh: seq 1 10 | xargs -I {} -P 10 sh -c 'curl -s http://localhost:2880/ | flock -x /tmp/lockfile echo "Request {}: $(cat)"'
+      => khi do ta thay :
+            * tab (browser tra ve "Server 1 took 15 seconds"
+            * " Hello from Server 2" va " Hello from Server 1" duoc ta ve luan phien
+
+ =>> ket luan:
+                * least_conn hoat dong oke (luan phien gui request den cac server
+                * nhung trong truong hop mot server treo, phai co cach nao do "han che gui request" den server nay
+                * phai phan biet duoc dau la code lam tac nghen cpu, han che viet code nay
 
 Tình huống 3 – Không có điểm tập trung cấu hình:
 Mỗi backend phải tự cấu hình SSL, header, cache, log… lặp lại trên nhiều máy. Khi cần thay đổi policy (ví dụ thêm header bảo mật, redirect), phải sửa từng server, dễ sai sót.
@@ -16,6 +33,25 @@ Client vẫn đổ request vào server đã chết hoặc đang lỗi vì không
 
 5 tình huống trên cho thấy: nếu không có Proxy & Load Balancing, hệ thống khó mở rộng, khó bảo mật, khó nâng cấp và trải nghiệm người dùng kém.
 Proxy & Load Balancing giúp che backend, phân tải hợp lý, tập trung cấu hình bảo mật, health-check tự động, và hỗ trợ nâng cấp không downtime.
+
+
+=========== Tình huống 2 – Server quá tải, không chia tải được ========
+cach 1: tang them server_3, server_4 ... vao nginx.conf (chịu tải cao )
+upstream backend_pool {
+  server server_1:8081;
+  server server_2:8082;
+  server server_3:8083;
+  ...
+}
+
+cach 2: (Muốn phân tải và failover tự động)
+| Cách                              | Mô tả                                                    | Khi nên dùng                                    |
+| --------------------------------- | -------------------------------------------------------- | ----------------------------------------------- |
+| **Round-robin (mặc định)**        | Luân phiên từng request sang từng server                 | Khi các backend gần như ngang nhau              |
+| **Least\_conn**                   | Gửi request tới server đang có **ít kết nối** nhất       | Khi các backend có thời gian xử lý không đều    |
+| **IP\_hash**                      | Hash theo IP client → 1 IP luôn vào 1 server             | Khi cần “sticky session” (giữ session của user) |
+| **Weight**                        | Bạn gán “trọng số” cho từng server                       | Khi 1 server mạnh hơn server khác               |
+| **Dynamic (nginx plus / module)** | Lấy danh sách server từ service discovery (Consul, etc.) | Khi backend scale động, thay đổi liên tục       |
 
 
 
