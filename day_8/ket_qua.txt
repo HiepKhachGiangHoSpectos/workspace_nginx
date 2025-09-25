@@ -38,3 +38,8 @@ nguyen nhan:
 + Nhưng khi docker-compose up bạn lại volumes: - ./server_1:/app → thư mục host (chưa có node_modules) đè lên toàn bộ /app của container → node_modules biến mất.
 +Kết quả: container khởi động nhưng trong /app không có node_modules, dẫn tới Cannot find module 'express'.
 
+
+
+=> co 2 cach giai quyet:
++ 1 la cd vao tung server, sau do npm i
++ 2 la them "/app/node_modules" vao volumes cua tung server trong docker-compose.yml
