@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<body>
+<h1>HTTP Push (fakeee)</h1>
+<div id="data"></div>
+
+<script>
+    async function fetchData() {
+        const res = await fetch('http://localhost:8216/push/data');
+        const json = await res.json();
+        document.getElementById('data').innerText = JSON.stringify(json);
+    }
+
+    setInterval(fetchData, 3000);
+    fetchData();
+</script>
+</body>
+</html>

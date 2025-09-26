@@ -10,6 +10,15 @@ services:
     expose:
       - "3000"
 
+  server_push:
+    build: ./server_push
+    container_name: day_16_server_push_1
+    volumes:
+      - ./server_push:/app
+      - /app/node_modules
+    expose:
+      - "3001"
+
   nginx:
     build: ./nginx
     container_name: day16_nginx
