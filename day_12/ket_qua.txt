@@ -1,0 +1,6 @@
+=========== lenh test ============
+ab -n 25000 -c 20000 http://localhost:82/
+
+Nghĩa là:
+-n 50: Tổng cộng gửi 50 requests
+-c 20: Gửi 20 requests đồng thời (concurrent connections)

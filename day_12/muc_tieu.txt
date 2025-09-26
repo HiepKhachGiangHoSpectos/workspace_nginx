@@ -1,0 +1,22 @@
+================= dat van de ==============
+Nguy cơ quá tải: Một client hoặc bot có thể gửi hàng nghìn request/giây → server bị nghẽn, ảnh hưởng tới người dùng bình thường.
+
+Tấn công DDoS đơn giản: Một dải IP gửi request liên tục → backend phải xử lý, CPU/RAM tăng cao.
+
+Spam API: Không kiểm soát tần suất truy cập dẫn tới vượt quá quota, mất công bằng giữa các người dùng.
+
+IP xấu tái diễn: Không chặn triệt để IP xấu nên lần nào cũng gây hại.
+
+
+================= Mục tiêu (Thử thách) ===============
+Thiết lập giới hạn 10 request/giây cho mỗi IP.
+Khi vượt giới hạn, Nginx tự trả lỗi (503/429) thay vì đẩy xuống backend.
+Thiết lập danh sách IP bị chặn hẳn.
+Test bằng cách dùng curl/ab bắn request nhanh để xem có bị limit/block.
+
+
+============================ goi y ===============
+Dùng module limit_req_zone + limit_req trong nginx.conf để giới hạn tốc độ theo IP (key $binary_remote_addr).
+Dùng deny trong block server/location để chặn IP cụ thể.
+Hoặc nâng cao: dùng geo hoặc map để quản lý danh sách IP lớn.
+Có thể test bằng ab -n 50 -c 20 http://localhost/… hoặc for i in {1..50}; do curl -s http://localhost/… & done.
