@@ -3,6 +3,11 @@ import {Kafka} from "kafkajs";
 import Redis from "ioredis";
 import fs from "fs-extra";
 import path from "path";
+import express from "express";
+import client from "prom-client";
+
+const app = express();
+const PORT = 3002; // metrics server port
 
 const redis = new Redis({host: "redis", port: 6379});
 
@@ -15,51 +20,62 @@ redis.on("error", (err) => {
 const kafka = new Kafka({clientId: "cache-invalidation", brokers: ["kafka:9092"]});
 const consumer = kafka.consumer({groupId: "cache-invalidation-group"});
 
-// Path lưu tạm các key failed (mock DB)
 const FAILED_FILE = path.join("/app", "failed_cache.json");
+let failedQueue = fs.existsSync(FAILED_FILE) ? fs.readJSONSync(FAILED_FILE) : [];
 
-// Load file failed cache (nếu có)
-let failedQueue = [];
-if (fs.existsSync(FAILED_FILE)) {
-    try {
-        failedQueue = fs.readJSONSync(FAILED_FILE);
-    } catch (err) {
-        console.error("Failed to read failed queue:", err.message);
-    }
-}
+// --- Prometheus metrics ---
+const register = new client.Registry();
 
-const MAX_RETRY = 3;
+const messagesReceived = new client.Counter({
+    name: 'cache_messages_received_total', help: 'Total messages received from Kafka'
+});
+const messagesSuccess = new client.Counter({
+    name: 'cache_messages_success_total', help: 'Total messages successfully deleted from Redis'
+});
+const messagesFailed = new client.Counter({
+    name: 'cache_messages_failed_total', help: 'Total messages failed and pushed to failed queue'
+});
+const failedQueueGauge = new client.Gauge({
+    name: 'failed_queue_size', help: 'Number of keys in failed queue'
+});
 
-// Retry xóa key
-async function retryDelete(key, attempt = 0) {
-    try {
-        const result = await redis.del(key);
-        console.log(`Deleted cache key ${key}, result=${result}`);
-        return true;
-    } catch (err) {
-        attempt++;
-        console.warn(`Retry ${attempt} failed for key ${key}:`, err.message);
-        if (attempt < MAX_RETRY) {
-            // Thử lại sau 1s
-            await new Promise(res => setTimeout(res, 1000));
-            return retryDelete(key, attempt);
-        } else {
-            // Push vào failedQueue
-            failedQueue.push({key, timestamp: Date.now()});
-            try {
-                await fs.writeJSON(FAILED_FILE, failedQueue, {spaces: 2});
-                console.warn(`Saved key ${key} to failed queue`);
-            } catch (err) {
-                console.error("Failed to write failed queue:", err.message);
-            }
-            return false;
+register.registerMetric(messagesReceived);
+register.registerMetric(messagesSuccess);
+register.registerMetric(messagesFailed);
+register.registerMetric(failedQueueGauge);
+
+// Endpoint Prometheus
+app.get('/metrics', async (req, res) => {
+    res.set('Content-Type', register.contentType);
+    res.end(await register.metrics());
+});
+
+app.listen(PORT, () => console.log(`Metrics server running on port ${PORT}`));
+
+
+async function retryDelete(key) {
+    const MAX_RETRY = 3;
+    let attempt = 0;
+    while (attempt < MAX_RETRY) {
+        try {
+            await redis.del(key);
+            console.log(`Deleted cache key ${key}`);
+            return true;
+        } catch (err) {
+            attempt++;
+            console.error(`Retry ${attempt} failed for key ${key}:`, err.message);
+            await new Promise(r => setTimeout(r, 2000)); // delay retry 2s
         }
     }
+    failedQueue.push({key, timestamp: Date.now()});
+    fs.writeJSONSync(FAILED_FILE, failedQueue, {spaces: 2});
+    console.warn(`Saved key ${key} to failed queue`);
+    return false;
 }
 
 // Xử lý failed queue định kỳ
 async function processFailedQueue() {
-    if (!failedQueue.length) return;
+    if (failedQueue.length === 0) return;
     console.log("Processing failed queue...");
     const newQueue = [];
     for (const item of failedQueue) {
@@ -72,11 +88,8 @@ async function processFailedQueue() {
         }
     }
     failedQueue = newQueue;
-    try {
-        await fs.writeJSON(FAILED_FILE, failedQueue, {spaces: 2});
-    } catch (err) {
-        console.error("Failed to write failed queue:", err.message);
-    }
+    fs.writeJSONSync(FAILED_FILE, failedQueue, {spaces: 2});
+    failedQueueGauge.set(failedQueue.length);
 }
 
 // Main
@@ -87,17 +100,15 @@ async function run() {
     await consumer.run({
         eachMessage: async ({message}) => {
             const key = message.value.toString();
+            messagesReceived.inc();
             console.log(`Received cache invalidate for key: ${key}`);
-            console.log('================dang cho 20s ==================')
-            // CHỜ 20 GIÂY TRƯỚC KHI GỌI retryDelete
-            await new Promise((resolve) => setTimeout(resolve, 20000));
-            console.log('================da cho 20s==================')
-            await retryDelete(key);
-        },
+            const ok = await retryDelete(key);
+            if (ok) messagesSuccess.inc(); else messagesFailed.inc();
+            failedQueueGauge.set(failedQueue.length);
+        }
     });
 
-    // Định kỳ xử lý failed queue
-    setInterval(processFailedQueue, 10000); // 10s
+    setInterval(processFailedQueue, 10000);
 }
 
 run().catch(err => {
