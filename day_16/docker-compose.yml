@@ -37,6 +37,20 @@ services:
     expose:
       - "3003"
 
+  redis:
+    image: redis:6.2-alpine
+    container_name: redis_pubsub
+    ports:
+      - "6379:6379"
+
+  gateway_ws:
+    build: ./gateway_ws
+    container_name: gateway_ws
+    ports:
+      - "8217:3000"  # WS client connect vào đây
+    depends_on:
+      - redis
+
   nginx:
     build: ./nginx
     container_name: day16_nginx

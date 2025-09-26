@@ -43,3 +43,39 @@ Hoạt động ổn định qua Nginx (proxy_pass với header Upgrade).
 | **Polling (HTTP)** | Cứ 2–3 s client gửi 1 request mới → server trả JSON                                                    | Mỗi lần đều có header HTTP, TCP handshake (nếu chưa reuse), nhiều request rời rạc → tốn băng thông, CPU, pin              | Delay bằng đúng khoảng polling (2–3 s) |
 | **WebSocket**      | Client mở 1 TCP+HTTP Upgrade duy nhất → sau đó server push thẳng dữ liệu xuống trên cùng connection đó | Không còn header lặp lại, không mở/đóng connection liên tục → tiết kiệm băng thông, ít wake-up CPU hơn, pin mobile đỡ hao | Gần như realtime (vài ms–trăm ms)      |
 
+// can co co che ping/pong
+Bạn có muốn mình viết thêm đoạn ping/pong để giữ kết nối WebSocket sống lâu (tránh timeout của proxy/firewall) không
+
+// co mot nhuoc diem la: neu client co mot yeu cau socket muon ket noi toi server, nhung server chet
+=> neu khong co co che reconnect, thi khi server song lai, cac client se khong nhan duoc thong bao
+
+de lam dieu do => can co mot gateway (khong cho phep ket noi truc tiep toi server nua, ma qua mot gateway trung gian (luon song))
+| Mô hình                                         | Mô tả                                                                     | Ưu điểm                                                                       | Nhược điểm                                               |
+| ----------------------------------------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | -------------------------------------------------------- |
+| **Gateway chung** (API Gateway kiêm WS Gateway) | Một gateway nhận **tất cả HTTP/REST + WS** rồi route về các microservice. | Triển khai đơn giản, 1 endpoint duy nhất, ít port.                            | Nếu gateway nặng hoặc sự cố sẽ ảnh hưởng cả HTTP lẫn WS. |
+| **Gateway chuyên biệt** (WS Gateway riêng)      | API Gateway xử lý HTTP/REST, WS Gateway xử lý WebSocket riêng.            | WS Gateway nhẹ, scale riêng theo số connection; API Gateway tối ưu theo REST. | Phức tạp hơn một chút (hai entry point).                 |
+
+=> cach trien khai:
++ server_lowlatency (service backend)
+Không mở WebSocket.
+Chỉ nhận request HTTP hoặc xử lý logic.
+Khi có dữ liệu mới cần đẩy realtime, nó publish vào một channel Redis (ví dụ lowlatency_channel).
+
++ gateway_ws (WebSocket Gateway)
+Chỉ giữ kết nối WebSocket với client.
+Subscribe kênh Redis lowlatency_channel.
+Khi Redis có message mới, gateway đẩy xuống tất cả client đang kết nối.
+
++ client.html (browser)
+Connect WebSocket tới ws://gateway_ws (không phải tới backend nữa).
+Nhận message realtime từ gateway.
+
+
+=> ket luan uu diem khi dung gateway ws
+| Ưu điểm                 | Mô tả                                                                                                                  |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **Tập trung kết nối**   | Client chỉ connect một nơi. Không phải mở nhiều WS tới nhiều service.                                                  |
+| **Backend đơn giản**    | Các service backend không phải xử lý WS connection, chỉ publish message.                                               |
+| **Dễ scale**            | Gateway WS scale theo số connection, backend scale theo logic riêng.                                                   |
+| **Tách biệt fault**     | Backend down không làm rớt WS client; chỉ cần Redis còn thì gateway vẫn nhận và push khi backend trở lại.              |
+| **Hỗ trợ queue/broker** | Có thể dùng Redis Pub/Sub, RabbitMQ, Kafka… tùy yêu cầu. Cần lưu message thì dùng queue, cần realtime nhẹ thì Pub/Sub. |

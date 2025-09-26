@@ -1,5 +1,5 @@
 {
-  "name": "server-polling",
+  "name": "gateway_ws",
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
