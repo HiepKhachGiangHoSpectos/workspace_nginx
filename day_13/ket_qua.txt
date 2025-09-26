@@ -1,4 +1,7 @@
-Gợi ý
+- worker_connections là số lượng kết nối đồng thời; do đó, họ chỉ nêu cách tính toán, ví dụ:
+- nếu bạn chỉ chạy 1 tiến trình với 512 kết nối, bạn sẽ chỉ có thể phục vụ 512 máy khách.
+- Nếu có 2 tiến trình, mỗi tiến trình có 512 kết nối, bạn sẽ có thể xử lý 2x512=1024 máy khách.
+Số lượng kết nối bị giới hạn bởi số lượng tệp mở tối đa (RLIMIT_NOFILE) trên hệ thống của bạn (ulimit -n)
 1. worker_processe
 Mỗi worker là 1 process độc lập.
 Best practice: đặt bằng số core CPU.
