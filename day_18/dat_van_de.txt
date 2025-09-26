@@ -1,0 +1,39 @@
+Đặt vấn đề:
+Website thường gặp các rủi ro bảo mật HTTP phổ biến, ví dụ:
+===============
+1 Trình duyệt truy cập HTTP thay vì HTTPS → nguy cơ MITM (Man-in-the-Middle).
+===============
+2 Trang web bị nhúng vào iframe độc hại → clickjacking.
+🔹 Khái niệm clickjacking
+
+Trang web A (trang thật, của bạn) có nút “Xác nhận thanh toán” hay “Đăng nhập”.
+
+Kẻ tấn công làm một trang B (trang giả mạo) rồi nhúng trang A vào một <iframe>.
+
+Trang B đặt một nút giả “Nhận quà” đè lên vị trí nút “Xác nhận thanh toán” của trang A.
+
+Người dùng tưởng đang click vào “Nhận quà” trên trang B, nhưng thật ra click vào nút trong trang A nằm trong iframe → thao tác nguy hiểm xảy ra.
+
+Đó là clickjacking: người dùng bị “dắt mũi” click nhầm vào thao tác nhạy cảm.
+===============
+3 Script ngoài hoặc iframe không đáng tin được tải → XSS hoặc dữ liệu bị rò rỉ.
+===============
+4 Trình duyệt tự đoán kiểu MIME → nguy cơ khai thác file → need nosniff.
+===============
+5 Thông tin referrer bị lộ khi chuyển hướng → privacy leak.
+
+============================
+
+Mục tiêu (thử thách):
+
+Giải quyết các tình huống trên:
+
+Ép trình duyệt chỉ dùng HTTPS bằng HSTS.
+
+Ngăn clickjacking bằng X-Frame-Options.
+
+Hạn chế XSS bằng CSP.
+
+Ngăn MIME sniffing bằng X-Content-Type-Options.
+
+Bảo vệ thông tin referrer bằng Referrer-Policy.
