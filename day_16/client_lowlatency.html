@@ -13,7 +13,7 @@
             console.log('Already connected');
             return;
         }
-        ws = new WebSocket("ws://localhost:8216/lowlatency/ws"); // qua nginx
+        ws = new WebSocket("ws://localhost:8217"); // qua nginx
         ws.onopen = () => { console.log('WS open'); };
         ws.onmessage = (e) => {
             try {
