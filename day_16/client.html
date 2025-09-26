@@ -11,7 +11,7 @@
 <script>
     async function fetchData() {
         try {
-            const res = await fetch('http://localhost:8216/data');
+            const res = await fetch('http://localhost:8216/polling/data');
             const json = await res.json();
             document.getElementById('data').innerText =
                 `Time: ${json.time}, Value: ${json.value}`;
