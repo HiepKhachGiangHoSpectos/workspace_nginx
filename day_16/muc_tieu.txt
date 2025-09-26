@@ -1,0 +1,8 @@
+Đặt vấn đề
+Giả sử bạn đang có hệ thống web thông thường chạy qua HTTP/HTTPS (REST API).
+Một số tình huống sau sẽ xuất hiện:
+
+Cập nhật thời gian thực
+Ví dụ: trang dashboard hiển thị số đơn hàng, trạng thái kho, vị trí xe.
+Nếu chỉ có HTTP/REST, client phải “poll” liên tục (gửi GET mỗi 2–3 giây) → lãng phí băng thông + server bị quá tải.
+Push dữ liệu từ server về client ngay lập tức
