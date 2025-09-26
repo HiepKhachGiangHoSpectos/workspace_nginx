@@ -79,3 +79,16 @@ Nhận message realtime từ gateway.
 | **Dễ scale**            | Gateway WS scale theo số connection, backend scale theo logic riêng.                                                   |
 | **Tách biệt fault**     | Backend down không làm rớt WS client; chỉ cần Redis còn thì gateway vẫn nhận và push khi backend trở lại.              |
 | **Hỗ trợ queue/broker** | Có thể dùng Redis Pub/Sub, RabbitMQ, Kafka… tùy yêu cầu. Cần lưu message thì dùng queue, cần realtime nhẹ thì Pub/Sub. |
+
+// can nghi xem neu voi hang trieu user, moi hang trieu socket, phai phan biet A gui cho B nhu nao (thay vi gui cho B, gui nham cho C thi chet do)
+           ┌───────────────┐
+client A ─▶│ gateway-ws #1 │─┐
+           └───────────────┘ │
+                             │
+           ┌───────────────┐ │   ┌─────────┐
+client B ─▶│ gateway-ws #2 │─┼──▶│ Redis   │
+           └───────────────┘ │   │ cluster │
+                             │   └─────────┘
+           ┌───────────────┐ │
+client C ─▶│ gateway-ws #3 │─┘
+           └───────────────┘
