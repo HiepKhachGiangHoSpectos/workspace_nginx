@@ -6,3 +6,8 @@ Cập nhật thời gian thực
 Ví dụ: trang dashboard hiển thị số đơn hàng, trạng thái kho, vị trí xe.
 Nếu chỉ có HTTP/REST, client phải “poll” liên tục (gửi GET mỗi 2–3 giây) → lãng phí băng thông + server bị quá tải.
 Push dữ liệu từ server về client ngay lập tức
+
+Ví dụ: có đơn hàng mới thì nhân viên phải thấy ngay, không phải reload trang.
+HTTP thường là client-initiated, server không tự “push” được.
+Trao đổi hai chiều / chat / tracking
+
