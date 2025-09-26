@@ -13,3 +13,17 @@ events {
     worker_connections 4096;
     multi_accept on;   # worker nhận nhiều conn một lúc
 }
+===================== ket qua chay ================
+// lenh chay: ab -n 50000 -c 5000 http://localhost:82/
+// lan 1
+Concurrency Level:      5000
+Time taken for tests:   4.659 seconds
+Complete requests:      50000
+Failed requests:        2080
+   (Connect: 0, Receive: 0, Length: 2080, Exceptions: 0)
+Total transferred:      8577680 bytes
+HTML transferred:       1725120 bytes
+Requests per second:    10731.68 [#/sec] (mean)
+Time per request:       465.910 [ms] (mean)
+Time per request:       0.093 [ms] (mean, across all concurrent requests)
+Transfer rate:          1797.91 [Kbytes/sec] received
