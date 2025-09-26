@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Attacker Page</title>
+    <style>
+        iframe {
+            width: 600px;
+            height: 400px;
+            opacity: 0.8;
+            position: relative;
+            z-index: 1;
+        }
+        button {
+            position: absolute;
+            top: 50px;
+            left: 50px;
+            z-index: 2;
+        }
+    </style>
+</head>
+<body>
+<h1>Trang attacker nhúng iframe</h1>
+<button>Fake button overlay</button>
+<iframe src="http://localhost:1802/index.html"></iframe>
+</body>
+</html>
