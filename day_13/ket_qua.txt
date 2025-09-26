@@ -27,3 +27,17 @@ Requests per second:    10731.68 [#/sec] (mean)
 Time per request:       465.910 [ms] (mean)
 Time per request:       0.093 [ms] (mean, across all concurrent requests)
 Transfer rate:          1797.91 [Kbytes/sec] received
+
+
+// lan 2
+Concurrency Level:      5000
+Time taken for tests:   4.643 seconds
+Complete requests:      50000
+Failed requests:        1824
+   (Connect: 0, Receive: 0, Length: 1824, Exceptions: 0)
+Total transferred:      8623504 bytes
+HTML transferred:       1734336 bytes
+Requests per second:    10768.15 [#/sec] (mean)
+Time per request:       464.332 [ms] (mean)
+Time per request:       0.093 [ms] (mean, across all concurrent requests)
+Transfer rate:          1813.66 [Kbytes/sec] received
