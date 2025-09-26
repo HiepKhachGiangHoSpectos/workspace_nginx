@@ -7,5 +7,3 @@ RUN apk add --no-cache luarocks \
 
 COPY nginx.conf /usr/local/openresty/nginx/conf/nginx.conf
 COPY lua/ /usr/local/openresty/nginx/lua/
-
-CMD ["openresty", "-g", "daemon off;"]
