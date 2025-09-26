@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Polling Test</title>
+</head>
+<body>
+<h1>Polling Test</h1>
+<div id="data"></div>
+
+<script>
+    async function fetchData() {
+        try {
+            const res = await fetch('http://localhost:8216/data');
+            const json = await res.json();
+            document.getElementById('data').innerText =
+                `Time: ${json.time}, Value: ${json.value}`;
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    // Poll mỗi 2 giây
+    setInterval(fetchData, 2000);
+    fetchData();
+</script>
+</body>
+</html>
