@@ -8,3 +8,4 @@
 =============== chung ta tat mot server nao do (server 1) ===========
 // case 1: request den server 1 (server 1 chet) thi bao loi ve trinh duyet
 
+// case 2: request den server 1 (server 1 chet) thi co gang tim den server khac
