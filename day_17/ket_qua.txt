@@ -128,6 +128,18 @@ Giải quyết nhược điểm bước 3:
 
 ✅ Đây là bước tiến hóa “cực đại” cho scale cực lớn.
 
+cach lam tu step 3 sang 4:
+
+Sử dụng Queue/Pub-Sub thay HTTP Purge:
+Không block backend: Đây là một ưu điểm rất lớn. Khi backend publish event vào message broker, nó không cần phải chờ HTTP response để xác nhận việc xóa cache. Điều này giảm độ trễ và giúp backend tiếp tục xử lý các request khác mà không bị chặn.
+Retry tự động: Với cơ chế message broker, nếu có sự cố mạng hoặc broker offline, các messages sẽ được retry tự động. Điều này giúp đảm bảo tính nhất quán của cache mà không cần phải lo lắng về việc mất thông tin.
+Dễ đồng bộ giữa multi-gateway, multi-layer cache: Một khi hệ thống có nhiều layer cache hoặc nhiều gateway, việc đồng bộ giữa các thành phần trở nên dễ dàng hơn khi sử dụng pub-sub. Các dịch vụ chỉ cần subscribe vào một event duy nhất và tự xử lý purge cache mà không cần phải gọi trực tiếp backend.
+Versioned Cache / Key Sharding:
+Versioning giúp tránh xung đột: Việc thêm version vào key là một chiến lược cực kỳ hữu ích để giải quyết vấn đề về multi-tenant hoặc khi hệ thống có nhiều instance khác nhau. Việc này giúp mỗi instance giữ một phiên bản dữ liệu riêng biệt và tránh xung đột giữa các key cache.
+Consistency giữa các layer: Khi bạn sử dụng versioned cache, bạn có thể dễ dàng đồng bộ các layer cache (Redis, OpenResty, CDN, v.v.) mà không gặp phải vấn đề của việc xóa cache không đúng version, điều này rất quan trọng trong các hệ thống có yêu cầu consistency cao.
+Multi-layer Cache (Redis, OpenResty, CDN):
+Layering giúp giảm tải cho backend: Với mô hình multi-layer cache, bạn có thể giảm tải cho backend rất nhiều. Redis có thể xử lý cache nhanh cho các dữ liệu nóng, OpenResty có thể cache ở layer gần người dùng hơn (tức là ở edge), và CDN sẽ cache dữ liệu toàn cầu.
+Pub/Sub giúp đồng bộ tất cả layers: Khi backend chỉ cần publish một event như "User 123 updated", toàn bộ hệ thống (cả Redis, OpenResty, và CDN) có thể tự động purge cache mà không cần backend phải thực hiện nhiều tác vụ gọi trực tiếp.
 ==================== ket luan ============================
 Bước 1: Không cache, cơ bản nhưng không tối ưu.
 Bước 2: Cache trực tiếp tại server, dễ thực hiện nhưng gây rủi ro nếu hệ thống scale.
