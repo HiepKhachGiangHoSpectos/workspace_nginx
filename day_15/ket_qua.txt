@@ -9,3 +9,43 @@
 // case 1: request den server 1 (server 1 chet) thi bao loi ve trinh duyet
 
 // case 2: request den server 1 (server 1 chet) thi co gang tim den server khac
+
+// case 3: request den server 1 (server 1 chet) thi co gang tim den server khac (nhung khong mat time cho)
+
+
+=============== server 2 chet ===========
+ Hiện tượng:
+ Bạn tắt server2, reload trình duyệt
+ Ban đầu request đi nhanh đến server1 → OK
+ Request tiếp theo lẽ ra đi tới server2 (theo least_conn) nhưng server2 đã down → request chậm timeout → sau đó Nginx tự loại server2 ra và chuyển sang server3
+ Đây là behavior bình thường của Nginx khi dùng passive health check (max_fails / fail_timeout)
+
+ - Giải thích chi tiết
+ Passive health check:
+ Nginx chỉ phát hiện backend chết khi có request thất bại.
+ Nếu request đi đến server2 và server2 dead, Nginx sẽ thử lại 1–2 lần → mới loại server2 khỏi pool.
+ Thời gian này gây delay.
+ Tốc độ request chậm phụ thuộc vào:
+ proxy_connect_timeout (mặc định 60s)
+ max_fails / fail_timeout
+ Nếu server down ngay lập tức, Nginx vẫn mất 1–2 vòng thử connect → mới route sang server khác
+ Active health check mới giải quyết nhanh:
+ Nginx (open-source) không có sẵn active health check → phải dùng module ngx_http_healthcheck_module hoặc Nginx Plus.
+ Active health check liên tục ping backend → nếu dead → loại ngay khỏi pool → không delay.
+
+- luu y
+ Với passive health check, luôn có 1 request bị delay khi backend down đột ngột.
+ Muốn 0 delay, phải dùng active health check hoặc Nginx Plus.
+ Còn open-source, cách tốt nhất là giảm max_fails + timeout để giảm delay tối đa (~1–2s thay vì 30–60s).
+
+ | Loại                   | Cơ chế                                                 | Ưu điểm                                                                               | Nhược điểm                                                       |
+ | ---------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+ | **Passive (mặc định)** | Nginx chỉ biết server chết sau khi có request fail     | Không cần cài thêm module                                                             | Luôn có 1 request đầu tiên bị delay khi backend chết             |
+ | **Active**             | Nginx chủ động ping (HTTP/TCP) tới các backend định kỳ | Phát hiện server chết trước khi có request → route ngay server khác → **không delay** | Nginx OSS không có sẵn, phải compile module hoặc dùng Nginx Plus |
+
+=> ket luan:
+- Muốn “không có request chết” hoàn toàn thì phải drain server trước khi tắt.
+- Muốn giảm tối đa khi server chết đột ngột → active health check nhanh + option redispatch + retries.
+- Không có Load Balancer(Ví dụ: Nginx khi cấu hình upstream, HAProxy, AWS ELB… đều là load balancer.)
+    nào có th
+
