@@ -15,3 +15,7 @@ Trao đổi hai chiều / chat / tracking
 Ví dụ: chat hỗ trợ khách hàng, tracking GPS xe giao hàng, notify lỗi real-time.
 HTTP thường yêu cầu một request/response mới cho mỗi thông điệp.
 Kết nối ổn định, latency thấp
+
+Ví dụ: ứng dụng mobile cần nhận update trong vài trăm ms thay vì polling 5 giây/lần.
+HTTP + polling tạo độ trễ cao, không tối ưu pin và mạng trên mobile.
+

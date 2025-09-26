@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<body>
+<h1>HTTP Low Latency (polling faster)</h1>
+<div id="data"></div>
+
+<script>
+    async function fetchStatus() {
+        const res = await fetch('http://localhost:8216/lowlatency/status');
+        const json = await res.json();
+        document.getElementById('data').innerText = JSON.stringify(json);
+    }
+
+    setInterval(fetchStatus, 500); // poll 0.5s
+    fetchStatus();
+</script>
+</body>
+</html>
