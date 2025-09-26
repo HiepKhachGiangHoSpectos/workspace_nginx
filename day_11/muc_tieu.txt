@@ -1,0 +1,10 @@
+- Đặt vấn đề (Problem)
+URL cũ vẫn còn người truy cập: Bạn đã thay đổi router trong app (VD: /tin-tuc → /news) nhưng khách truy cập, Googlebot vẫn vào URL cũ.
+SEO & trải nghiệm người dùng: Nếu không có redirect, URL cũ trả 404 → mất thứ hạng SEO, khách gặp lỗi.
+Khó quản lý tập trung: Các URL cũ/nội dung tĩnh không còn trong app mới, phải redirect ở nhiều nơi → rủi ro sai sót.
+
+
+- Mục tiêu (Goals)
+Thực hành viết rule rewrite/redirect có điều kiện ở Nginx.
+Chuyển hướng URL cũ sang URL mới trước khi request tới app.
+Giữ nguyên thứ hạng SEO & đảm bảo người dùng không gặp lỗi 404 khi đổi router.
