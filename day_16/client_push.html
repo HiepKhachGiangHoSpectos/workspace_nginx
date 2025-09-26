@@ -1,18 +1,27 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Push Demo</title>
+</head>
 <body>
-<h1>HTTP Push (fakeee)</h1>
-<div id="data"></div>
+<h1>Push Demo – Tình huống 2</h1>
+<button id="connect">Connect WebSocket</button>
+<ul id="messages"></ul>
 
 <script>
-    async function fetchData() {
-        const res = await fetch('http://localhost:8216/push/data');
-        const json = await res.json();
-        document.getElementById('data').innerText = JSON.stringify(json);
-    }
-
-    setInterval(fetchData, 3000);
-    fetchData();
+    let ws;
+    document.getElementById('connect').addEventListener('click', () => {
+        ws = new WebSocket('ws://localhost:8216/push/ws');
+        ws.onopen = () => {
+            ws.send('hello from client_push');
+        };
+        ws.onmessage = e => {
+            const li = document.createElement('li');
+            li.textContent = e.data;
+            document.getElementById('messages').appendChild(li);
+        };
+    });
 </script>
 </body>
 </html>

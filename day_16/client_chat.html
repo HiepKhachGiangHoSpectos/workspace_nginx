@@ -1,29 +1,38 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat Demo</title>
+</head>
 <body>
-<h1>HTTP Chat (polling)</h1>
-<input id="msg" placeholder="message"/>
-<button onclick="send()">Send</button>
-<pre id="log"></pre>
+<h1>Chat Demo – Tình huống 3</h1>
+<button id="connect">Connect WebSocket</button><br><br>
+<input id="inputMsg" placeholder="Nhập tin nhắn...">
+<button id="send">Send</button>
+<ul id="messages"></ul>
 
 <script>
-    async function send() {
-        const val = document.getElementById('msg').value;
-        await fetch('http://localhost:8216/chat/send', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: val })
-        });
-    }
+    let ws;
+    document.getElementById('connect').addEventListener('click', () => {
+        ws = new WebSocket('ws://localhost:8216/chat/ws');
+        ws.onopen = () => {
+            addMsg('Connected to server_chat');
+        };
+        ws.onmessage = e => addMsg(e.data);
+    });
 
-    async function receive() {
-        const res = await fetch('http://localhost:8216/chat/receive');
-        const json = await res.json();
-        document.getElementById('log').innerText = JSON.stringify(json, null, 2);
-    }
+    document.getElementById('send').addEventListener('click', () => {
+        const msg = document.getElementById('inputMsg').value;
+        ws.send(msg);
+        addMsg(`[Bạn]: ${msg}`);
+        document.getElementById('inputMsg').value = '';
+    });
 
-    setInterval(receive, 2000);
-    receive();
+    function addMsg(text) {
+        const li = document.createElement('li');
+        li.textContent = text;
+        document.getElementById('messages').appendChild(li);
+    }
 </script>
 </body>
 </html>
