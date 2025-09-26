@@ -6,7 +6,27 @@ services:
     container_name: day17_redis
     ports:
       - "6379:6379"
+  zookeeper:
+    image: bitnami/zookeeper:3.8
+    container_name: day_17_zookeeper
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    ports:
+      - "2181:2181"
 
+  kafka:
+    image: bitnami/kafka:3.4
+    container_name: day_17_kafka
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
   backend:
     build: ./backend
     container_name: day17_backend
@@ -15,6 +35,9 @@ services:
       - /app/node_modules
     ports:
       - "3000:3000"
+    depends_on:
+      - kafka
+      - redis
 
   cache-invalidation:
     build: ./cache-invalidation
@@ -22,6 +45,9 @@ services:
     volumes:
       - ./cache-invalidation:/app
       - /app/node_modules
+    depends_on:
+      - kafka
+      - redis
 
   nginx-gateway:
     build: ./nginx-gateway
