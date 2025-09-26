@@ -1,0 +1,30 @@
+| **Tiêu chí**              | **Redis Stream**                                                   | **Kafka**                                                       | **RabbitMQ**                                                          |
+| ------------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------- | --------------------------------------------------------------------- |
+| **Kiểu hệ thống**         | Log-based, in-memory store                                         | Distributed log-based, persistent                               | Broker-based, queue-based                                             |
+| **Persistence**           | Có (Message lưu trong Redis, có thể cấu hình độ bền)               | Có (Lưu trữ lâu dài, tuỳ chỉnh retention)                       | Có (Lưu trữ trong disk, cấu hình TTL hoặc TTL trên message)           |
+| **Tốc độ**                | Rất nhanh (nhờ Redis in-memory)                                    | Tốc độ cao, nhưng phụ thuộc vào disk I/O                        | Tốc độ nhanh nhưng có thể bị ảnh hưởng khi có nhiều message cần xử lý |
+| **Phân phối message**     | Broadcast (mỗi message gửi tới tất cả subscriber)                  | Publish-Subscribe, Consumer Groups                              | Queue-based, các message phân phối theo hàng đợi                      |
+| **Đảm bảo delivery**      | Không có đảm bảo delivery hoàn toàn (tùy thuộc vào cài đặt)        | Đảm bảo delivery, hỗ trợ ack và retry                           | Đảm bảo delivery, hỗ trợ ack, retry và persistence                    |
+| **Cơ chế message replay** | Có (Redis hỗ trợ message replay qua Stream)                        | Có (Kafka hỗ trợ replay message dựa trên offset)                | Có (RabbitMQ hỗ trợ requeue nếu message chưa ack)                     |
+| **Scalability**           | Tốt cho hệ thống nhỏ hoặc vừa, hạn chế khi mở rộng                 | Rất tốt, dễ dàng scale out theo chiều ngang                     | Tốt, nhưng khó mở rộng như Kafka                                      |
+| **Retention**             | Có thể giới hạn thời gian lưu trữ (configurable)                   | Có thể tùy chỉnh retention theo thời gian hoặc kích thước       | Cấu hình TTL hoặc giới hạn theo số lần gửi                            |
+| **Failover**              | Có (Redis Sentinel hoặc Redis Cluster hỗ trợ failover)             | Có (Kafka có khả năng failover tự động giữa các node)           | Có (RabbitMQ hỗ trợ clustering và mirror queues)                      |
+| **Hỗ trợ stream**         | Hỗ trợ stream mạnh mẽ với các consumer group                       | Hỗ trợ stream và message logs với các consumer groups           | Không hỗ trợ stream như Kafka, nhưng hỗ trợ queue lâu dài             |
+| **Sử dụng chính**         | Hệ thống nhỏ, các ứng dụng yêu cầu tốc độ cao và dữ liệu cần cache | Hệ thống phân tán lớn, ứng dụng cần xử lý lượng dữ liệu rất lớn | Hệ thống cần độ tin cậy cao, xử lý hàng đợi message phức tạp          |
+
+
+Tóm lại:
+
+Redis Stream: Phù hợp cho các ứng dụng yêu cầu tốc độ cao, sử dụng Redis làm hệ thống lưu trữ tạm thời. Tuy nhiên, Redis Stream không có khả năng mở rộng quy mô như Kafka và không cung cấp khả năng phân tán mạnh mẽ.
+
+Kafka: Thích hợp cho hệ thống phân tán lớn, yêu cầu khả năng lưu trữ lâu dài, xử lý dữ liệu với độ trễ thấp và khả năng mở rộng linh hoạt. Kafka là sự lựa chọn tuyệt vời khi bạn cần xử lý các luồng dữ liệu lớn và đảm bảo tính toàn vẹn của message.
+
+RabbitMQ: Thích hợp cho các hệ thống yêu cầu quản lý message với tính năng phân phối theo hàng đợi (queue-based), hỗ trợ các cơ chế retry và lưu trữ lâu dài. Tuy nhiên, RabbitMQ có thể không thể mở rộng nhanh chóng như Kafka và không mạnh mẽ trong việc xử lý dữ liệu lớn như Kafka.
+
+Lựa chọn:
+
+Sử dụng Redis Stream nếu bạn cần tốc độ cao với yêu cầu không quá khắt khe về độ bền và khả năng mở rộng.
+
+Sử dụng Kafka nếu bạn cần xử lý lượng dữ liệu lớn, khả năng mở rộng cao, và yêu cầu lưu trữ lâu dài.
+
+Sử dụng RabbitMQ nếu bạn cần một message broker đơn giản, mạnh mẽ cho các ứng dụng yêu cầu tin cậy và có độ trễ không quá cao.
