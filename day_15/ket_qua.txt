@@ -3,3 +3,8 @@
  + docker compose up -d: giong nhu reload may (thay doi docker-composer, phai dung lenh nay)
  + docker exec -it container_name command (toi doan no giong nhu + o docker desktop cua tung container, vi du container dang chay node, thi command reload no giong voi
  button reload o docker desltop)
+
+
+=============== chung ta tat mot server nao do (server 1) ===========
+// case 1: request den server 1 (server 1 chet) thi bao loi ve trinh duyet
+
