@@ -1,0 +1,26 @@
+- thuc hien lenh : curl -I http://localhost:8080/tin-tuc/abc
+nhin thay
+HTTP/1.1 301 Moved Permanently
+Location: /news/abc
+
+la okee
+
+
+===================== chu phap cua return command ==============
+return [code] [text];
+[code]: là một HTTP status code hợp lệ, ví dụ 200, 301, 302, 404…
+[text]:
+Nếu code là 3xx (301, 302, 307…), [text] là URL để redirect.
+Nếu code là 2xx, 4xx, 5xx…, [text] là nội dung body (plain text) mà Nginx trả về cho client.
+
+===========================
+| Kỹ năng / Mảng                      | Ví dụ cụ thể                                                                                                                      |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| **Automation / IaC**                | Viết Terraform, Ansible, Helm chart… để hạ tầng “as code”. Không SSH thủ công vào server để sửa file.                             |
+| **CI/CD**                           | Thiết kế pipeline (GitHub Actions, GitLab CI, Jenkins…) build/test/deploy tự động. Triển khai rolling update, blue-green, canary. |
+| **Container & Orchestration**       | Quản lý Docker, Kubernetes, ECS/EKS. Dùng Ingress Controller, Service Mesh.                                                       |
+| **Monitoring & Alerting**           | Prometheus, Grafana, ELK/EFK. Thiết lập alert khi backend quá tải, SSL hết hạn…                                                   |
+| **Scalability & High Availability** | Auto-scaling group, multi-region, failover. Load balancer nhiều tầng (LB → API Gateway → Service).                                |
+| **Security**                        | Vault/Secrets, RBAC, policy network, audit log.                                                                                   |
+| **Cost & Performance Optimization** | Theo dõi bill cloud, tối ưu tài nguyên.                                                                                           |
+| **Incident Management**             | Runbook, on-call, postmortem, chaos engineering.                                                                                  |

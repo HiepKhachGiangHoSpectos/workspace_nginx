@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  server_1:
+    build: server_1
+    volumes:
+      - ./server_1:/app
+      - /app/node_modules      # giữ node_modules trong container
+    expose:
+      - "8083"   # chỉ expose nội bộ docker network (optional)
+
+  server_2:
+    build: server_2
+    expose:
+      - "8082"   # chỉ expose nội bộ docker network (optional)
+    volumes:
+      - ./server_2:/app    # neu muon mount
+      - /app/node_modules      # giữ node_modules trong container
+
+  nginx:
+    build: nginx
+    container_name: nginx_11
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/nginx.conf:ro
+    ports:
+      - "82:82"
+    depends_on:
+      - server_1
+      - server_2
