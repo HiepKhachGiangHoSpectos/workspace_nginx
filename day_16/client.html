@@ -1,28 +1,46 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Polling Test</title>
+    <title>Test Polling vs WS</title>
 </head>
 <body>
-<h1>Polling Test</h1>
-<div id="data"></div>
+<h1>Test Polling vs WebSocket</h1>
+
+<button id="startPolling">Start Polling</button>
+<div id="pollingData"></div>
+
+<button id="connectWS">Connect WebSocket</button>
+<div id="wsData"></div>
 
 <script>
-    async function fetchData() {
-        try {
+    const pollingData = document.getElementById('pollingData');
+    const wsData = document.getElementById('wsData');
+
+    document.getElementById('startPolling').onclick = () => {
+        setInterval(async () => {
             const res = await fetch('http://localhost:8216/polling/data');
             const json = await res.json();
-            document.getElementById('data').innerText =
-                `Time: ${json.time}, Value: ${json.value}`;
-        } catch (err) {
-            console.error(err);
-        }
-    }
+            pollingData.textContent = 'Polling: ' + JSON.stringify(json);
+        }, 2000);
+    };
 
-    // Poll mỗi 2 giây
-    setInterval(fetchData, 2000);
-    fetchData();
+    document.getElementById('connectWS').onclick = () => {
+        const ws = new WebSocket('ws://localhost:8216/polling/ws');
+        ws.onopen = () => ws.send('hello');
+
+        ws.onmessage = e => {
+            try {
+                // parse JSON broadcast
+                const data = JSON.parse(e.data);
+                wsData.innerHTML += `<div>WS broadcast: ${data.value} at ${data.time}</div>`;
+            } catch {
+                // echo string
+                wsData.innerHTML += `<div>${e.data}</div>`;
+            }
+        };
+    };
 </script>
+
 </body>
 </html>

@@ -19,3 +19,27 @@ Kết nối ổn định, latency thấp
 Ví dụ: ứng dụng mobile cần nhận update trong vài trăm ms thay vì polling 5 giây/lần.
 HTTP + polling tạo độ trễ cao, không tối ưu pin và mạng trên mobile.
 
+
+=> Giải pháp với WebSocket
+WebSocket là giao thức “nâng cấp” từ HTTP, tạo một kết nối TCP lâu dài, hai chiều:
+Server push dữ liệu ngay khi có sự kiện → không cần polling.
+Client gửi dữ liệu liên tục mà không mở kết nối mới mỗi lần.
+Latency thấp, tiết kiệm băng thông, CPU.
+Hoạt động ổn định qua Nginx (proxy_pass với header Upgrade).
+
+
+
+| #     | Tình huống                                       | Mô tả                                                          | Vấn đề thực tế khi chỉ dùng HTTP/REST                                                                                                                |
+| ----- | ------------------------------------------------ | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1** | **Cập nhật thời gian thực (Dashboard)**          | Client cần số liệu mới liên tục (đơn hàng, tồn kho, vị trí xe) | – Phải **polling liên tục** (gửi GET 2–3s/lần) → **lãng phí băng thông** <br> – Server phải xử lý hàng loạt request giống nhau, dễ quá tải           |
+| **2** | **Push dữ liệu ngay lập tức** (notify order mới) | Server cần chủ động “đẩy” event tới client                     | – HTTP là **client-initiated**; server không tự push được <br> – Phải triển khai **long-polling** phức tạp, kém hiệu quả                             |
+| **3** | **Trao đổi hai chiều / Chat / Tracking GPS**     | Cần trao đổi tin nhắn / tọa độ liên tục, thời gian thực        | – HTTP chỉ “1 request – 1 response” <br> – Muốn gửi tin nhắn 2 chiều phải mở **request mới mỗi lần** <br> – Độ trễ cao, tốn CPU, khó quản lý kết nối |
+| **4** | **Kết nối ổn định, latency thấp (mobile)**       | Ứng dụng mobile cần update <300ms, tiết kiệm pin và dữ liệu    | – Polling 5s/lần tạo **độ trễ cao** <br> – **Tốn pin & mạng** do liên tục mở/tắt kết nối <br> – Không đảm bảo realtime khi mạng chập chờn            |
+
+
+
+| Cách               | Cơ chế                                                                                                 | Tốn băng thông / pin                                                                                                      | Độ trễ                                 |
+| ------------------ | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| **Polling (HTTP)** | Cứ 2–3 s client gửi 1 request mới → server trả JSON                                                    | Mỗi lần đều có header HTTP, TCP handshake (nếu chưa reuse), nhiều request rời rạc → tốn băng thông, CPU, pin              | Delay bằng đúng khoảng polling (2–3 s) |
+| **WebSocket**      | Client mở 1 TCP+HTTP Upgrade duy nhất → sau đó server push thẳng dữ liệu xuống trên cùng connection đó | Không còn header lặp lại, không mở/đóng connection liên tục → tiết kiệm băng thông, ít wake-up CPU hơn, pin mobile đỡ hao | Gần như realtime (vài ms–trăm ms)      |
+

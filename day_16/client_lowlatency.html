@@ -1,18 +1,35 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 <body>
-<h1>HTTP Low Latency (polling faster)</h1>
-<div id="data"></div>
+<h2>Low-latency push client</h2>
+<button onclick="connect()">Connect WS</button>
+<pre id="log"></pre>
 
 <script>
-    async function fetchStatus() {
-        const res = await fetch('http://localhost:8216/lowlatency/status');
-        const json = await res.json();
-        document.getElementById('data').innerText = JSON.stringify(json);
+    function log(s){ document.getElementById('log').textContent += s + "\n"; }
+    let ws;
+    function connect(){
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            console.log('Already connected');
+            return;
+        }
+        ws = new WebSocket("ws://localhost:8216/lowlatency/ws"); // qua nginx
+        ws.onopen = () => { console.log('WS open'); };
+        ws.onmessage = (e) => {
+            try {
+                const msg = JSON.parse(e.data);
+                if (msg.type === 'update') {
+                    log('UPDATE: ' + JSON.stringify(msg.data));
+                } else {
+                    log('MSG: ' + e.data);
+                }
+            } catch {
+                log('RAW: ' + e.data);
+            }
+        };
+        ws.onclose = () => console.log('WS closed');
+        ws.onerror = (err) => console.log('WS error ' ,err);
     }
-
-    setInterval(fetchStatus, 500); // poll 0.5s
-    fetchStatus();
 </script>
 </body>
 </html>
