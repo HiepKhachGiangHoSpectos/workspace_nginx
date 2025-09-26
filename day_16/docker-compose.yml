@@ -28,6 +28,15 @@ services:
     expose:
       - "3002"
 
+  server_lowlatency:
+    build: ./server_lowlatency
+    container_name: day_16_server_lowlatency_1
+    volumes:
+      - ./server_lowlatency:/app
+      - /app/node_modules
+    expose:
+      - "3003"
+
   nginx:
     build: ./nginx
     container_name: day16_nginx
