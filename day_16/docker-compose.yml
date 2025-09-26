@@ -19,6 +19,15 @@ services:
     expose:
       - "3001"
 
+  server_chat:
+    build: ./server_chat
+    container_name: day_16_server_chat_1
+    volumes:
+      - ./server_chat:/app
+      - /app/node_modules
+    expose:
+      - "3002"
+
   nginx:
     build: ./nginx
     container_name: day16_nginx

@@ -11,3 +11,7 @@ Ví dụ: có đơn hàng mới thì nhân viên phải thấy ngay, không ph�
 HTTP thường là client-initiated, server không tự “push” được.
 Trao đổi hai chiều / chat / tracking
 
+
+Ví dụ: chat hỗ trợ khách hàng, tracking GPS xe giao hàng, notify lỗi real-time.
+HTTP thường yêu cầu một request/response mới cho mỗi thông điệp.
+Kết nối ổn định, latency thấp
