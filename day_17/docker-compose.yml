@@ -1,0 +1,33 @@
+version: '3.8'
+services:
+  redis:
+    image: redis:6-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+  backend:
+    build: ./backend
+    container_name: backend
+    ports:
+      - "3000:3000"
+
+  cache-invalidation:
+    build: ./cache-invalidation
+    container_name: cache-invalidation
+    ports:
+      - "4000:4000"
+    depends_on:
+      - nginx-gateway
+
+  nginx-gateway:
+    build: ./nginx-gateway
+    container_name: nginx-gateway
+    volumes:
+      - ./nginx-gateway/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf:ro
+      - ./nginx-gateway/lua:/usr/local/openresty/nginx/lua:ro
+    ports:
+      - "8217:8217"
+    depends_on:
+      - backend
+      - redis

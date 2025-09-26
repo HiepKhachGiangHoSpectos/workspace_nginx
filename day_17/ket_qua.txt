@@ -1,0 +1,137 @@
++ Cache phân tầng
+Layer 1: CDN (global POP) – cache tĩnh/dynamic edge.
+Layer 2: Varnish/Nginx tại data center – cache local.
+Layer 3: Redis/Memcached cluster – cache logic app.
+
+
+- sơ đồ kiến trúc “cache & purge” kiểu enterprise
++ GET flow:
+Client request → CDN (check cache) → Nginx Gateway (check Redis) → Backend nếu cache miss.
+Nếu cache hit ở CDN hoặc Redis → trả trực tiếp, giảm latency và load backend.
+            GET (read)
+Client ───────────────► CDN ─────────────► Nginx Gateway ───────► Redis Cache
+│                       │ cache hit?       │ cache miss?           │
+│                       │ ◀─────────────── │ ◀──────────────────── │
+│                       │ yes              │ get từ backend        │
+│                       │                  │ ──► App Server        │
+│                       │                  │                       │
+│                       │                  │ set cache             │
+│                       │                  │ ─────────────────────►│
+│                       │                  │ return data           │
+│                       ▼                  ▼                        ▼
+                      Response to Client (cache hoặc live data)
+
++ UPDATE flow:
+Client gửi PUT → backend cập nhật DB.
+Backend gọi Cache Invalidation Service → tính key cache liên quan → xóa cache ở Redis / Nginx gateway.
+Có thể đồng thời purge cache ở CDN (API của Cloudflare, Fastly…) nếu dùng CDN.
+
+            PUT / UPDATE
+Client ───────────────► App Server ───────► Cache Invalidation Service ─────► Redis / Nginx Gateway
+│    update user            │ tính key cần xóa                         │ xóa key hoặc publish
+│                          └──────────────────────────────────────────► cache
+│
+│                       Optional: purge CDN cache via API
+│
+│                       Response to Client (success/failure)
+
+================================================
+- trong kiến trúc quy mô lớn, nên gọi Cache Invalidation Service thay vì backend gọi trực tiếp OpenResty/nginx-gateway. Lý do:
+Decoupling – backend không cần biết gateway cache nằm ở đâu, chỉ cần gửi “invalidate this key” đến service.
+Retry / đảm bảo – service có thể retry purge, publish vào queue/pub-sub, đảm bảo cache được xóa ngay cả khi gateway tạm thời offline.
+Scale tốt hơn – nhiều backend có thể đồng thời gọi service này, service này xử lý cache purge tập trung, không làm backend “đứng chờ” hoặc phụ thuộc vào network tới gateway.
+Đa kênh / nhiều cache – service cache-invalidation có thể xóa cache trên nhiều gateway hoặc nhiều layer cache khác nhau (OpenResty, Redis, CDN…).
+Tóm lại: Cache Invalidation Service là cách chuẩn để đảm bảo cache luôn consistent trong hệ thống lớn.
+
+
+- truoc kia toi cu nghi request X toi server (vi du A), A update data, sau do tra ve cho client, request Y muon co data, request den A, A doc db roi tra ve
+day la cach chua he toi uu(cach 1).
+- Sau do toi biet den cache, request X toi server (vi du A), A update data, sau do luu vao cache, sau do tra ve cho client, request Y muon co data, request den A, A doc cache, khong co thi doc
+db, sau do set cache roi tra ve cho client day la cach chua he toi uu cho lam, vi server A biet qua nhieu ve co che cache, cach xoa key N va cac key lien quan cua N ( cach 2)
+- Sau do toi lai co Cache Invalidation Service - noi ma "biet nhieu ve cache, cach xoa key", request X toi server (vi du A), A update data, thay vi luu vao redis, no goi Cache Invalidation Service (http hoac queue - tranh mat cache)
+sau do request Y muon co data, goi den gateway, gateway check xem co cache khong (neu dung lua thi nhanh vi cung mot cai gi ma http ay, ban giai thich doan nay nha), neu khong co doc tu back end,sau do set vao cache, roi tra ve client (cach 3)
+
+===>
+Step 1 – Không cache (Cách 1)
+
+Flow:
+- Client X gửi request → Server A.
+- Server A update DB.
+- Server A trả về kết quả cho client.
+- Client Y gửi request → Server A.
+- Server A đọc DB, trả về kết quả.
+
+Nhận xét:
+- Backend biết tất cả dữ liệu, không có cache.
+- Không tối ưu: đọc DB nhiều lần, latency cao, tải DB lớn.
+- Cache không tồn tại → mọi request đều đi thẳng DB.
+
+✅ Đây là bước khởi đầu, “tiêu chuẩn” nhưng chưa tối ưu.
+
+---------------------------------------------------
+
+Step 2 – Cache trực tiếp ở server (Cách 2)
+
+Flow:
+- Client X gửi request → Server A.
+- Server A update DB.
+- Server A update cache (Redis/Memcached) cho key liên quan.
+- Server A trả về client.
+- Client Y gửi request → Server A.
+- Server A check cache → nếu có trả cache, nếu không đọc DB → set cache → trả client.
+
+Nhận xét:
+- Cache được lưu ngay tại backend, server “biết quá nhiều về cache”.
+- Backend phải xử lý: tính key cache, set cache, xóa cache liên quan, bất đồng bộ khó.
+- Nếu backend scale nhiều instance → consistency cache trở nên phức tạp.
+- Cache logic nằm trong server → coupling cao.
+
+✅ Đây là bước “tối ưu hơn 1”, giảm đọc DB nhưng backend phải gánh trách nhiệm cache.
+
+---------------------------------------------------
+
+Step 3 – Cache Invalidation Service + Gateway (Cách 3)
+
+Flow:
+- Client X gửi request → Server A.
+- Server A update DB.
+- Server A không set cache, mà gọi Cache Invalidation Service (HTTP /queue /pub-sub) để thông báo key nào bị invalidate.
+- Khi Client Y gửi request → Gateway (OpenResty/Nginx) check cache:
+  - Nếu có → trả thẳng.
+  - Nếu không → gọi backend, backend trả dữ liệu → gateway set cache → trả client.
+
+Cache Invalidation Service chịu trách nhiệm:
+- Xóa key trong Redis / purge gateway / purge CDN.
+- Retry, đảm bảo consistency, nhiều backend có thể gọi đồng thời.
+
+Nhận xét:
+- Backend không biết gì về cache, chỉ tập trung update DB.
+- Cache logic tách riêng → dễ scale, có retry, có queue/pub-sub để đảm bảo cache luôn nhất quán.
+- Hệ thống lớn dễ mở rộng: nhiều backend, nhiều gateway, nhiều layer cache (Redis, OpenResty, CDN).
+
+Đây là kiến trúc “chuẩn” trong hệ thống scale lớn.
+
+✅ Đây là bước “tiến hóa tối ưu” về mặt tách bạch trách nhiệm và khả năng scale.
+
+---------------------------------------------------
+Step 4 (nâng cao hơn) – Multi-layer / Event-driven / Versioned Cache
+
+Giải quyết nhược điểm bước 3:
+- Cache Invalidation qua HTTP đôi khi chưa đủ nếu nhiều gateway, nhiều layer cache.
+- Dùng event-driven (Kafka / NATS / RabbitMQ) → backend publish event, tất cả cache layer subscribe và purge tự động.
+- Versioned cache / key sharding → tránh xung đột key, hỗ trợ multi-tenant, scale cực lớn.
+
+Ưu điểm:
+- Phù hợp hệ thống hàng triệu user, hàng nghìn requests/giây.
+- Không cần gateway biết hết backend → hoàn toàn event-driven.
+- Có thể áp dụng ở microservices phức tạp.
+
+✅ Đây là bước tiến hóa “cực đại” cho scale cực lớn.
+
+==================== ket luan ============================
+Bước 1: Không cache, cơ bản nhưng không tối ưu.
+Bước 2: Cache trực tiếp tại server, dễ thực hiện nhưng gây rủi ro nếu hệ thống scale.
+Bước 3: Cache Invalidation Service + Gateway, phân tách trách nhiệm rõ ràng, dễ mở rộng.
+Bước 4: Multi-layer/Event-driven/Versioned Cache, giải quyết tốt vấn đề lớn với hàng triệu người dùng.
+Bước 5: Cache Pre-warming + Advanced Cache Strategies, tối ưu hóa dữ liệu cache với nhiều cấp độ, dành cho hệ thống quy mô cực lớn.
+Bước tiếp theo có thể là Machine Learning-based Cache Predictions, nơi bạn sử dụng các thuật toán học máy để dự đoán những dữ liệu nào sẽ được yêu cầu, tối ưu hóa cache tự động hơn nữa.
