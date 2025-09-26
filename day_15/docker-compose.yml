@@ -24,14 +24,13 @@ services:
     container_name: server_15_3
     ports:
       - "3003:3003"
-
-  nginx:
-    image: nginx:latest
-    container_name: nginx_15
+  haproxy:
+    image: haproxy:latest
+    container_name: haproxy
     ports:
       - "8215:82"
     volumes:
-      - ./nginx/loadbalance.conf:/etc/nginx/conf.d/loadbalance.conf:ro
+      - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
     depends_on:
       - server1
       - server2
