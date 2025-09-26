@@ -1,0 +1,15 @@
+Gợi ý
+1. worker_processe
+Mỗi worker là 1 process độc lập.
+Best practice: đặt bằng số core CPU.
+Ví dụ máy 4 core:
+worker_processes auto;
+(auto = Nginx tự lấy số core).
+2. worker_connections
+Mỗi worker handle N connection.
+Tổng kết nối ≈ worker_processes * worker_connections.
+Tăng lên nếu muốn nhiều connection đồng thời:
+events {
+    worker_connections 4096;
+    multi_accept on;   # worker nhận nhiều conn một lúc
+}
