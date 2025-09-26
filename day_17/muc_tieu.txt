@@ -1,0 +1,174 @@
+1. Cache trang động (Dynamic Page Caching)
+-----------------------------------------
+- Đặt vấn đề: Backend trả JSON/HTML động, nhiều người truy cập cùng endpoint làm server quá tải.
+- Mục tiêu: Lưu response tạm ở Nginx để giảm số request tới backend.
+- Gợi ý: proxy_cache, proxy_cache_path, proxy_cache_valid.
+- Kết quả mong muốn: Truy cập lần 2 trở đi nhanh hơn, backend giảm tải.
+
+2. Cache theo tham số query
+---------------------------
+- Đặt vấn đề: URL cùng path nhưng query khác nhau (vd /product?id=1 và ?id=2).
+- Mục tiêu: Mỗi query là một key cache riêng.
+- Gợi ý: Điều chỉnh proxy_cache_key để gồm $query_string.
+- Kết quả mong muốn: Cache đúng từng item, không bị lẫn dữ liệu.
+
+3. Cache POST → GET
+-------------------
+- Đặt vấn đề: API POST nhưng thực ra chỉ đọc (search). Muốn cache như GET.
+- Mục tiêu: Giảm tải cho API search.
+- Gợi ý: Biến POST thành GET trước khi đi qua Nginx hoặc dùng module cache POST.
+- Kết quả mong muốn: Truy vấn search nhanh hơn, ít hit backend.
+
+4. Cache riêng theo user/cookie
+------------------------------
+- Đặt vấn đề: Trang động có nhiều user, nhưng muốn cache riêng theo user_id.
+- Mục tiêu: Tránh lẫn dữ liệu giữa user.
+- Gợi ý: Tạo proxy_cache_key gồm $cookie_userid hoặc $http_authorization.
+- Kết quả mong muốn: Mỗi user có cache riêng, vẫn giảm tải backend.
+
+5. Cache microservice
+---------------------
+- Đặt vấn đề: Gateway gọi nhiều microservice, mỗi service khác nhau.
+- Mục tiêu: Cache output từng service để giảm round-trip.
+- Gợi ý: Đặt location /service1/ … proxy_cache_valid riêng.
+- Kết quả mong muốn: Microservice giảm tải, gateway nhanh hơn.
+
+6. Purge cache khi update
+-------------------------
+- Đặt vấn đề: Admin cập nhật dữ liệu, cache vẫn còn cũ.
+- Mục tiêu: Xoá cache đúng URL vừa update.
+- Gợi ý: Module ngx_cache_purge hoặc API tự ghi đè file cache.
+- Kết quả mong muốn: Sau khi update, người dùng thấy dữ liệu mới ngay.
+
+7. Cache “stale” khi backend lỗi
+------------------------------
+- Đặt vấn đề: Backend 502, user nhận lỗi.
+- Mục tiêu: Vẫn trả cache cũ để trải nghiệm ổn định.
+- Gợi ý: proxy_cache_use_stale error timeout updating http_502;
+- Kết quả mong muốn: Backend chết tạm thời nhưng user vẫn nhận được trang cũ.
+
+8. Cache + load balancing
+------------------------
+- Đặt vấn đề: Nhiều backend server, muốn cache chung ở layer Nginx.
+- Mục tiêu: Cache trước khi load balancing để tránh request lặp.
+- Gợi ý: Đặt cache trước upstream.
+- Kết quả mong muốn: Backend giảm tải, cân bằng tải hiệu quả.
+
+9. Cache header tùy biến
+------------------------
+- Đặt vấn đề: Content thay đổi theo Accept-Language.
+- Mục tiêu: Cache theo header ngôn ngữ.
+- Gợi ý: proxy_cache_key $uri$http_accept_language;
+- Kết quả mong muốn: Đúng ngôn ngữ người dùng, không lẫn.
+
+10. Cache per-device
+-------------------
+- Đặt vấn đề: Mobile và Desktop khác HTML.
+- Mục tiêu: Cache riêng cho từng device.
+- Gợi ý: Key gồm $http_user_agent hoặc custom header.
+- Kết quả mong muốn: Mỗi thiết bị nhận đúng giao diện.
+
+11. Cache TTL động
+-----------------
+- Đặt vấn đề: Một số trang cần cache lâu, một số ngắn.
+- Mục tiêu: TTL khác nhau theo route.
+- Gợi ý: proxy_cache_valid 200 5m; cho /products, 30s cho /orders.
+- Kết quả mong muốn: Cân bằng giữa tốc độ và độ tươi dữ liệu.
+
+12. Cache file tĩnh + động
+--------------------------
+- Đặt vấn đề: Static file và dynamic content cùng server.
+- Mục tiêu: Dùng chung cache để tiết kiệm disk.
+- Gợi ý: Dùng proxy_cache và fastcgi_cache chung một keys_zone.
+- Kết quả mong muốn: Một store cache quản lý tất cả.
+
+13. Cache disk + RAM
+-------------------
+- Đặt vấn đề: Disk chậm, nhiều file nhỏ.
+- Mục tiêu: Tối ưu performance bằng RAM.
+- Gợi ý: keys_zone để index ở RAM, data trên disk SSD.
+- Kết quả mong muốn: Cache lookup nhanh, tiết kiệm IO.
+
+14. Warm-up cache
+----------------
+- Đặt vấn đề: Trang quan trọng lần đầu user truy cập vẫn chậm.
+- Mục tiêu: Preload cache trước khi user vào.
+- Gợi ý: Script curl toàn bộ URL để Nginx cache trước.
+- Kết quả mong muốn: User vào lần đầu cũng nhanh.
+
+15. Invalidate theo pattern
+--------------------------
+- Đặt vấn đề: Nhiều URL /product/* cần xoá cache.
+- Mục tiêu: Xoá theo wildcard.
+- Gợi ý: ngx_cache_purge + pattern, hoặc dọn thủ công file.
+- Kết quả mong muốn: Quản lý cache hàng loạt dễ hơn.
+
+16. Bypass cache khi cần
+-----------------------
+- Đặt vấn đề: Admin không muốn cache khi test.
+- Mục tiêu: Cho phép bỏ qua cache.
+- Gợi ý: Header Cache-Control: no-cache hoặc cookie.
+- Kết quả mong muốn: Linh hoạt giữa cache và non-cache.
+
+17. Cache nội dung nén (gzip)
+----------------------------
+- Đặt vấn đề: Response gzip, muốn cache version gzip luôn.
+- Mục tiêu: Phục vụ nhanh cho client hỗ trợ gzip.
+- Gợi ý: gzip_static + cache.
+- Kết quả mong muốn: Tốc độ nhanh hơn, tiết kiệm băng thông.
+
+18. Shared cache giữa nhiều Nginx node
+-----------------------------------
+- Đặt vấn đề: Có nhiều Nginx front-end.
+- Mục tiêu: Chia sẻ cache chung (vd NFS).
+- Gợi ý: Mount chung proxy_cache_path.
+- Kết quả mong muốn: Cache nhất quán giữa các node.
+
+19. Cache theo địa lý
+-------------------
+- Đặt vấn đề: Content khác nhau theo khu vực.
+- Mục tiêu: Cache riêng cho từng geo.
+- Gợi ý: Sử dụng $geoip_country_code trong key.
+- Kết quả mong muốn: User mỗi quốc gia nhận đúng nội dung.
+
+20. Cache + AJAX injection
+------------------------
+- Đặt vấn đề: HTML chung nhưng phần user-specific load qua AJAX.
+- Mục tiêu: Cache HTML gốc, dữ liệu riêng qua AJAX.
+- Gợi ý: Cache HTML, API riêng không cache hoặc cache ngắn.
+- Kết quả mong muốn: Trang load nhanh nhưng vẫn cá nhân hoá.
+
+21. Cache response lỗi nhẹ (404)
+-------------------------------
+- Đặt vấn đề: Bị crawl nhiều link sai gây tải backend.
+- Mục tiêu: Cache 404 tạm thời.
+- Gợi ý: proxy_cache_valid 404 1m;
+- Kết quả mong muốn: Giảm tải backend cho link sai.
+
+22. Cache websocket upgrade headers
+----------------------------------
+- Đặt vấn đề: Muốn cache handshake WS hoặc SSE.
+- Mục tiêu: Giảm tải backend handshake.
+- Gợi ý: Ít dùng nhưng có thể cache 101 Switching Protocols.
+- Kết quả mong muốn: Handshake nhanh hơn.
+
+23. Cache key tùy chỉnh
+----------------------
+- Đặt vấn đề: Muốn định nghĩa key phức tạp.
+- Mục tiêu: Kiểm soát chính xác cache.
+- Gợi ý: proxy_cache_key "$scheme$proxy_host$request_uri$http_someheader";
+- Kết quả mong muốn: Cache theo logic business riêng.
+
+24. Tối ưu dung lượng cache
+---------------------------
+- Đặt vấn đề: Disk cache đầy, lookup chậm.
+- Mục tiêu: Giới hạn và dọn cache.
+- Gợi ý: max_size trong proxy_cache_path + cron dọn file.
+- Kết quả mong muốn: Cache luôn sạch, không hết disk.
+
+25. Kết hợp CDN
+---------------
+- Đặt vấn đề: Vừa có CDN vừa có Nginx cache.
+- Mục tiêu: Phân tầng cache (CDN trước, Nginx sau).
+- Gợi ý: Đặt Nginx như origin, CDN cache trước.
+- Kết quả mong muốn: Hệ thống chịu tải lớn, phân phối nhanh.
