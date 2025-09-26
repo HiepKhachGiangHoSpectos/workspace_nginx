@@ -1,0 +1,5 @@
+- su khac biet giua reload
+ + o docker desktop cua tung container: giong nhu reload cua ung dung (vi du trang web node dang chay, thi chung ta restart ung dung), thay doi file js, thi dung cai nay
+ + docker compose up -d: giong nhu reload may (thay doi docker-composer, phai dung lenh nay)
+ + docker exec -it container_name command (toi doan no giong nhu + o docker desktop cua tung container, vi du container dang chay node, thi command reload no giong voi
+ button reload o docker desltop)
