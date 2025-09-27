@@ -1,0 +1,16 @@
+- day 7 duoc clone tu day 6
+neu chung ta truy cap vao http://localhost:8080/index.php, chung ta khong the hien thi
+noi dung cua file php, thay vao do chung ta thay hien thi len cua so download
+
+Vay phai lam sao? (https://viblo.asia/p/docker-ung-dung-php-nginx-phan-3-config-nginx-va-tim-hieu-fastcgi-GrLZDRpV5k0)
+
+Đặt vấn đề
+
+– Tới giờ Nginx mới chỉ serve file tĩnh (HTML, CSS, JS, hình ảnh).
+– Muốn chạy được PHP (WordPress, Laravel…) thì Nginx không tự hiểu PHP, phải “gửi” file .php tới một PHP engine (thường là php-fpm) qua giao thức FastCGI.
+
+Mục tiêu
+
+– Cài một container PHP-FPM.
+– Cấu hình Nginx để nhận request .php và chuyển cho PHP-FPM xử lý.
+– Trả kết quả ra cho trình duyệt (ví dụ: file info.php hiện phpinfo()).

@@ -1,7 +1,7 @@
 FROM nginx:alpine
 
-# Xóa default config
+# Xoá default config nếu muốn
 RUN rm /etc/nginx/conf.d/default.conf || true
 
-# Copy config gzip/cache vào container
-COPY gzip_cache.conf /etc/nginx/conf.d/gzip_cache.conf
+# Copy file cấu hình reverse proxy tới php-fpm
+COPY default.conf /etc/nginx/conf.d/default.conf

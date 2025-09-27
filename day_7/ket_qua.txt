@@ -1,0 +1,239 @@
+xong, chung ta truy cap vao, http://localhost:8080/index.php,
+ da hien thi duoc noi dung trang php.
+
+=============Tuy nhien chung ta co hai cau hoi ===========
+- toi co hai thac mac,
+1. tai sao phai cai them container php, trong khi co container
+ nginx roi, chung ta vao container nay, cai dat php, cai dat php-fpm la xong ma nhi?
+2. neu da cai php container, vay khi truy cap vao http://localhost:8080/index.php,
+ ro rang dang trỏ đến server cua nginx (theo nhu day 6, se khong hien thi duoc mã php),
+ tai sao giờ lai được nhỉ, thât magic
+
+- cau tra loi
+1. Sao không cài PHP ngay trong container Nginx?
+
+Về kỹ thuật: bạn hoàn toàn có thể dùng 1 container chứa cả Nginx lẫn PHP-FPM.
+
+Ví dụ image bitnami/nginx-php-fpm hoặc tự build từ nginx:alpine rồi apk add php php-fpm…
+
+Sau đó cấu hình Nginx trỏ đến 127.0.0.1:9000 (nội bộ container).
+
+Nhưng Docker khuyến nghị: 1 container = 1 process chính (principle of single responsibility).
+
+Container Nginx chỉ lo làm reverse proxy / serve static.
+
+Container PHP-FPM chỉ lo chạy PHP code.
+
+Dễ scale: bạn có thể tăng số container PHP-FPM mà không động đến Nginx.
+Dễ update: update PHP lên 8.3 chỉ rebuild container PHP, không rebuild container Nginx.
+Nên trong thực tế, DevOps hay làm 2 container riêng như vậy.
+
+2.Magic: sao http://localhost:8080/index.php lại chạy PHP?
+  Đúng là bạn truy cập vào Nginx container (port 8080 mapped tới 80 trong container Nginx).
+  Tuy nhiên Nginx không “tự chạy PHP” mà nó proxy request đó sang PHP-FPM container qua FastCGI:
+  nginx/default.conf có block:
+
+  location ~ \.php$ {
+      include fastcgi_params;
+      fastcgi_pass php:9000;   # 'php' là tên service trong docker-compose
+      fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+  }
+
+
+Khi bạn vào /index.php, Nginx nhận request, nhận ra file .php,
+không tự đọc file mà gửi nội dung + path của file qua socket php:9000.
+Container PHP-FPM nhận được, thực thi PHP, trả về HTML cho Nginx.
+Nginx nhận HTML và gửi lại cho browser.
+
+Tức là:
+Browser ⇄ Nginx (nghe port 8080) ⇄ PHP-FPM (port 9000 nội bộ Docker)
+Bạn không thấy “mã PHP” vì browser không truy cập trực tiếp PHP-FPM, mà Nginx đã chạy PHP rồi trả về HTML.
+
+
+=> tóm gọn
+| Cách                              | Ưu điểm                                  | Nhược điểm                 |
+| --------------------------------- | ---------------------------------------- | -------------------------- |
+| **Cài PHP trong container Nginx** | Đơn giản, 1 container                    | Khó scale, update PHP      |
+| **2 container: Nginx + PHP-FPM**  | Tách biệt rõ, dễ scale, chuẩn production | Cấu hình phức tạp hơn chút |
+
+
+
+=============== bai hoc rut ra ================
+nhu vay toi hieu tai sao nguoi ra build container redis,
+ sql,php-fpm,... roi, de dễ scale, sau nay tang so luong container len
+  cho dễ, và container nginx chỉ việc phân phối request tới cac container này.
+  Logic tuong tự cho các service của chúng ta (vi du user-service, warehouse-serivce),
+  co the co 3 container warehouse-serivce, 4 container user-service, scale
+   vãn dễ dàng (sau do dung nginx container lam reverse proxy, phan phoi request toi cac container tuong ung)
+
+=>
+Mô hình hiện tại bạn đang thực hành
+
+Nginx container: chỉ đóng vai trò gateway / load balancer / reverse proxy (nhận request từ ngoài, route tới các backend).
+
+PHP-FPM container: thực thi PHP (hoặc một service backend khác).
+
+Redis container: cache/session store.
+
+MySQL/Postgres container: database.
+
+=> Mỗi thành phần có container riêng, scale theo nhu cầu.
+
+📈 Khi scale
+
+Ví dụ service warehouse-service chạy bằng NodeJS/NestJS:
+
+Bạn có thể chạy 3 container warehouse-service:
+
+warehouse-service-1
+
+warehouse-service-2
+
+warehouse-service-3
+
+Rồi để Nginx (hoặc traefik / API Gateway) phân phối request đến các container này (round-robin, least-connections…).
+
+Tương tự user-service 4 container, inventory-service 2 container…
+
+Khi cần nâng cấp phiên bản mới:
+
+Deploy thêm container mới với version mới → test → chuyển traffic → tắt container cũ (zero downtime).
+
+📝 So sánh với PHP-FPM
+
+PHP-FPM là ví dụ cụ thể: tách phần webserver (Nginx) và phần chạy code (PHP).
+
+Microservice cũng thế: tách API Gateway (Nginx / Envoy) và các backend service (NestJS, Java, Go…).
+
+Cách này giúp:
+Dễ scale theo nhu cầu từng service.
+Độc lập version/ngôn ngữ.
+Dễ deploy và update.
+
+=============== vi du ======
+Để mình làm ví dụ cụ thể nhé – nó rất giống cách bạn vừa chạy PHP-FPM và Nginx nhưng áp dụng cho microservice:
+
+🧩 Tình huống
+
+Bạn có user-service viết bằng NestJS.
+Hiện tại bạn đang chạy 3 container user-service version 1.0:
+
+user-service-v1-1
+user-service-v1-2
+user-service-v1-3
+
+
+Nginx (hoặc API Gateway) đang reverse proxy theo kiểu round-robin đến 3 container này.
+
+🚀 Muốn nâng cấp lên version 1.1
+
+Bạn build image mới:
+
+docker build -t user-service:1.1 .
+
+
+Rồi chạy thêm 1 container mới với image mới:
+
+user-service-v1.1-1
+
+
+Cấu hình Nginx sửa nhẹ để route một phần traffic đến container mới (hoặc dùng canary release: 5% traffic sang v1.1 để test).
+
+Ví dụ upstream trong Nginx:
+
+upstream user_service {
+    server user-service-v1-1:3000;
+    server user-service-v1-2:3000;
+    server user-service-v1-3:3000;
+    server user-service-v1.1-1:3000;  # thêm bản mới vào
+}
+
+
+Bạn test thấy version 1.1 ổn → spin thêm 2 container v1.1:
+
+user-service-v1.1-2
+user-service-v1.1-3
+
+
+Rồi gỡ 3 container cũ v1.0 ra khỏi upstream.
+=> Người dùng hầu như không bị downtime (Nginx luôn có container healthy để trả lời).
+
+✅ Độc lập version/ngôn ngữ là:
+
+Bạn có thể deploy version mới song song version cũ, không cần tắt service cũ ngay.
+
+Có thể chạy service mới bằng ngôn ngữ khác mà vẫn để Nginx route (ví dụ user-service 1.0 viết NestJS, 1.1 viết GoLang cũng được).
+
+Gateway/Nginx không quan tâm service viết bằng gì, miễn là trả HTTP đúng port là route được.
+
+
+============== canary release=============
+             +--------------------+
+User Request →|  Nginx / API Gateway|
+             +--------------------+
+                 /      |      \
+                /       |       \
+               /        |        \
+   +----------------+  +----------------+  +----------------+
+   |user-service v1 |  |user-service v1 |  |user-service v1.1|
+   |container 1     |  |container 2     |  |container (canary)|
+   +----------------+  +----------------+  +----------------+
+         ^                   ^                     ^
+         |                   |                     |
+         +-------90% traffic--+-----90% traffic-----+
+                                                   |
+                                                   +--10% traffic (test version mới)
+90% traffic vẫn đi version 1.0 (container cũ).
+
+10% traffic đi version 1.1 (container mới) để test.
+
+Khi thấy ổn → tăng dần % traffic cho v1.1 → gỡ v1.0.
+
+Có thể làm tỉ lệ này ngay trong Nginx với weight:
+
+upstream user_service {
+    server user-service-v1-1:3000 weight=3;  # v1.0 nhiều weight hơn
+    server user-service-v1-2:3000 weight=3;
+    server user-service-v1.1-1:3000 weight=1;  # v1.1 ít traffic hơn
+}
+
+
+Nhờ vậy bạn:
+
+Không gián đoạn dịch vụ (zero downtime).
+
+Test version mới ngay trong môi trường thật.
+
+Dễ rollback (chỉ cần gỡ v1.1 khỏi upstream).
+
+
+========= van de ======
+van de 1: chung ta tat version cu nhu nao (gia su container cũ đang xử lý requett),
+tat di co phai request do chua duoc thuc thi?
+ Van de 2: viec có hai version nhu vay, co phai lỗ hổng không, version 1 thuc hien
+  logic A, version 2 thuc hien logic A nhung hoi khác một chút, nhu vậy request mà gửi
+   tới version 2 se khác với version 1. hmmm khó có thể chấp nhận được
+
+=> giai phap
+van de 1:
+Tắt version cũ khi nó đang xử lý request
+Nếu bạn kill container đột ngột → các request đang chạy trong container đó sẽ fail (người dùng nhận lỗi).
+“Drain” traffic trước khi tắt:
+– Bước 1: bỏ container đó khỏi upstream (ngừng nhận request mới).
+– Bước 2: đợi vài giây (hoặc cấu hình “graceful shutdown”) cho các request đang chạy xong.
+– Bước 3: sau khi container không còn request mới → dừng container.
+
+Ví dụ trong Kubernetes có terminationGracePeriodSeconds.
+Trong Nginx có thể reload upstream để bỏ server đó ra.
+ Docker thuần bạn cũng có thể chỉnh healthcheck để “fail” → load balancer không gửi request nữa.
+
+
+van de 2:
+Hai version khác logic → request khác nhau
+Đúng là nếu v1 và v2 xử lý khác nhau thì có thể sinh ra dữ liệu “không đồng nhất”. Để tránh:
+Backward compatibility: Version mới phải tương thích với version cũ (ít nhất với API và dữ liệu đang dùng).
+Feature flag / toggle: Chưa bật tính năng mới trên v2 cho đến khi chắc chắn, chỉ test “ẩn” logic bên trong.
+Tách traffic: Canary chỉ test với user nội bộ hoặc một nhóm user có thể chấp nhận thay đổi.
+Dữ liệu chung: Nếu v1 và v2 cùng ghi vào DB thì schema DB phải backward-compatible, hoặc bạn dùng DB riêng cho v2 để tránh xung đột.
+Nếu không làm mấy nguyên tắc đó thì canary sẽ thành “nguy hiểm” thật 😅
+
