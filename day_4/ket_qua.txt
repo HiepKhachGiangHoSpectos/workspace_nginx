@@ -1,0 +1,54 @@
+================= Day 4 – Reverse Proxy =================
+
+Mục tiêu:
+- Dựng Node.js app chạy trong container, không mở port ra ngoài.
+- Dùng Nginx làm reverse proxy, map http://app.local:2840 → Node app.
+
+Kết quả:
+- Truy cập http://app.local:2840 thấy "Hello from Node app - Day 4".
+- Container node_app không có port ngoài host, chỉ Nginx có 2840:80.
+
+Những vấn đề thực tế:
+- Nếu mỗi service đều tự mở port ra ngoài thì:
+  + Mỗi lần truy cập phải nhớ port (3000, 4000, 5000…).
+  + Khó quản lý SSL/HTTPS, firewall, domain.
+  + Bảo mật kém: ai cũng có thể truy cập trực tiếp backend.
+- Nhưng Nginx reverse proxy xuất hiện để giải quyết những vấn đề thực tế này:
+  + Che giấu backend: bên ngoài không biết service nào chạy port nào.
+  + Gom nhiều backend về một cổng duy nhất (80/443) → dễ quản lý firewall, SSL.
+  + Gắn domain đẹp cho từng service (app.local, api.local…) thay vì nhớ port.
+  + Cho phép thêm caching, load balancing, rate limit… mà không đụng tới code backend.
+
+Giải thích:
+- node_app chỉ EXPOSE 3000 (nội bộ), không map ra host.
+- Nginx và node_app cùng mạng Docker nên Nginx gọi được http://nodeapp:3000.
+- Nginx là “cửa” duy nhất mở ra host (2840:80). Browser chỉ kết nối tới Nginx.
+- Đây chính là pattern “reverse proxy” thực tế, giống như “network gateway”.
+
+============================
+neu chi thay doi code hoac docker-compose.yml, thi chay lenh: docker compose up  -d
+neu thay doi: thai chay lenh : docker compose up --build -d
+    - file Dockerfile
+    - Thay đổi code nằm trong thư mục build context được COPY vào image.
+    - Hoặc chắc chắn muốn rebuild cho sạch.
+
+=============== phan biet =============
+- Forward Proxy = đại diện cho người dùng → ra ngoài
+    + Tôi không cần biết chính xác ai gửi đến tôi, chỉ cần biết server đích là gì. IP hiện lên server đích là IP proxy, không phải IP thật của client
+- Reverse Proxy = đại diện cho server → nhận vào
+    + Tôi không cần biết chính xác ai gửi đến tôi (client), tôi sẽ phân phối request này cho một trong các server backend có IP khác nhau để xử lý.”
+
+| **Tiêu chí**                         | **Forward Proxy** 🧍➡️🌍                                                        | **Reverse Proxy** 🌍➡️🧍                                                             |
+| ------------------------------------ | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| **Đại diện cho ai?**                 | Đại diện cho **client** (người dùng)                                            | Đại diện cho **server** (hệ thống backend)                                           |
+| **Ẩn IP của ai?**                    | Ẩn IP của **client**                                                            | Ẩn IP của **server**                                                                 |
+| **Dùng ở phía nào?**                 | Phía **client-side** (gần người dùng)                                           | Phía **server-side** (trước server gốc)                                              |
+| **Vị trí đặt**                       | Đặt **trước client**, kiểm soát outbound traffic                                | Đặt **trước server**, kiểm soát inbound traffic                                      |
+| **Mục tiêu chính**                   | Truy cập ra ngoài, vượt tường lửa, lọc nội dung, cache web                      | Bảo vệ backend, phân tải (load balancing), cache nội dung, xử lý SSL, tăng hiệu năng |
+| **Truy cập server nào?**             | Truy cập **bất kỳ server ngoài nào**                                            | Chuyển tiếp đến **các backend server cụ thể**                                        |
+| **Client có biết server gốc không?** | Có thể **không biết** — proxy thay mặt client truy cập internet                 | **Không biết** — chỉ thấy proxy, không thấy server gốc                               |
+| **Server có biết client không?**     | Thường chỉ thấy **IP của proxy**, không thấy IP thật của client                 | Có thể thấy IP thật nếu proxy truyền qua (`X-Forwarded-For`, ...)                    |
+| **Ai cấu hình & kiểm soát?**         | Do người dùng hoặc tổ chức **phía client** cấu hình (công ty, trường học, v.v.) | Do **admin phía server / dịch vụ** cấu hình (DevOps, SysAdmin, ... )                 |
+| **Chức năng phổ biến**               | Ẩn danh, vượt kiểm duyệt, lọc web, cache cho client                             | Load balancing, SSL termination, caching server, bảo mật server nội bộ               |
+| **Tường hợp dùng phổ biến**          | Truy cập ẩn danh, dùng VPN/proxy để vào web bị chặn, lọc nội dung               | Web server cần phân tải, bảo vệ API, giấu kiến trúc backend, dùng CDN hoặc Nginx     |
+| **Ví dụ thực tế**                    | VPN, Tor, Squid Proxy, proxy nội bộ trường học                                  | Nginx reverse proxy, HAProxy, Cloudflare, AWS ALB, Apache mod_proxy                  |

@@ -1,0 +1,15 @@
+Bạn đã làm xong phần “hosting tĩnh” (html). Sang Day 4 ta tập mô phỏng thực tế: Nginx đứng trước một ứng dụng khác.
+
+Bạn có một app Node.js đơn giản (chỉ trả về “Hello from Node”).
+
+App này chạy trong container riêng trên port 3000.
+
+Nginx container nhận request ở http://app.local:2840 (port 2840 trên Windows) → chuyển tiếp (proxy) sang container Node chạy port 3000 → nhận response → trả về browser.
+
+Mục tiêu:
+
+Tạo hai container (Nginx + Node) bằng docker-compose.
+
+Nginx có file cấu hình reverse proxy.
+
+Truy cập http://app.local:2840 trong trình duyệt → thấy nội dung app Node.js.
