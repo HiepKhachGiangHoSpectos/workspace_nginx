@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  nginx:
+    build: nginx
+    container_name: day_3_nginx
+    ports:
+      - "2830:80"   # truy cập localhost:2830 trên Windows
+    volumes:
+      - ./html_site1:/usr/share/nginx/html_site1
+      - ./html_site2:/usr/share/nginx/html_site2
+      - ./nginx/site1.conf:/etc/nginx/conf.d/site1.conf
+      - ./nginx/site2.conf:/etc/nginx/conf.d/site2.conf

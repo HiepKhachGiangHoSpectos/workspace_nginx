@@ -1,0 +1,33 @@
+# Kết quả Day 2 & Day 3
+
+## Day 2 (Cách 1 – Multi-port)
+- Mục tiêu: có 2 site nhưng dùng cùng tên server_name (localhost).
+- Giải pháp: mỗi site listen một port khác nhau trong container (80, 81…).
+- Trên host map ra các port khác nhau (2830:80, 2831:81…).
+- Người dùng phải nhớ port khi truy cập: 
+  http://localhost:2830 (site1), http://localhost:2831 (site2).
+- Ưu điểm: dễ thiết lập, không cần sửa file hosts.
+- Nhược điểm: không thân thiện, ít dùng trong môi trường production.
+
+## Day 3 (Cách 2 – Virtual Host theo server_name)
+- Mục tiêu: nhiều site chạy chung một port nhưng khác tên miền.
+- Giải pháp: cả 2 server block đều `listen 80` (một port duy nhất trong container).
+  Nginx dựa vào Host header (server_name) để quyết định đưa request tới server block nào.
+- Trên host chỉ map 1 port duy nhất: 2830:80.
+- Người dùng truy cập theo tên miền:
+  http://site1.local:2830 → site1
+  http://site2.local:2830 → site2
+- Cần sửa file hosts trên Windows để tạo domain ảo:
+C:\Windows\System32\drivers\etc\hosts
+127.0.0.1 site1.local
+127.0.0.1 site2.local
+
+- Sau khi chỉnh file hosts, chạy:
+docker compose up -d # nếu container chưa chạy
+docker exec -it my_nginx nginx -t # kiểm tra cấu hình
+docker exec -it my_nginx nginx -s reload # reload Nginx
+
+
+## Kết luận
+- Day 2 (Cách 1):** Mỗi site một port riêng. Ít gặp (thường chỉ test nội bộ).
+- Day 3 (Cách 2):** Một port duy nhất, nhiều domain. Đây là cách giống môi trường thực tế (shared hosting, multi-domain trên 80/443).
