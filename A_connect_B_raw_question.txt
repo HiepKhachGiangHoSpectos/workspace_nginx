@@ -1,0 +1,20 @@
+oke gio chung ta bat dau lai cau chuyen nhe, cau chuyen kieu nhu nay
+
+
+"toi la mot nguoi newbie A, toi muon ket noi voi user B (o tan ben my)"
+chi voi mot cau nay thoi, nhung co ti tỉ vấn đề cần được quan tâm
+đầu tiên, A và B phải "truy cập mạng", nhưng khi truy cập, làm sao để biết A đang nói chuyện với B mà không phải C? => ta có IP, định danh duy nhất cho từng client. Tuy nhien nếu A nói chuyện trưc tiếp với B, có rất nhiều vấn đề, nhu lộ IP, đường truyền nhu nào để tối ưu, ... khi nay chung ta them router (R) ở trước A và B, r se tìm đường truyền tối ưu, không cho B biết ip cua A,...Nhung mà A và B lại phải nhớ IP của nhau (hoăc của router)=> rất khó để nhớ => cần DNS  => A -> R -> DNS -> B.
+
+Ta lại có vấn đề tiếp =)) đó là A bị quản lý bởi ai đó (D), D muốn chặn khong cho A truy cập với Y, hay muốn giới hạn nội dung mà A có thể xem => cần dùng forward proxy (F)
+ta có A -> R -> F->  DNS -> B.
+Xong van de ve A, gio sang B, B lai duoc "bố mẹ"  P quản lý (ví dụ nhu server node, php,...)
+giờ ta có A -> R -> F->  DNS -> P ->  B.
+Vấn đề lại xay ra, A không những muốn nói chuyện với B, ma muốn nói chuyện với H( đêu do P1 quản lý), => nguyen tac la A chi can biet dia chi cua B, cua H, khong quan tam duoc quan ly boi ai => can co ai do giups A tim duoc B,H => su dung revert proxy (RP)
+=> A -> R -> F->  DNS -> RP->  P ->  B.
+Vấn đề lại xảy ra, có rất nhiều người muốn nói chuyện với B, B thay so hãi, cần "nhân bản" lên thì mới rep được tin nhắn => có các instance, A chỉ cần gửi tin nhắn cho B, vậy tin nhắn này sẽ đến các clone cua B như nào? do ai quanr lý => cần có load balancer (LB)
+A -> R -> F->  DNS -> RP/LB (hoac RP -> LB)->  P ->  B.
+Gần xong gòi, giờ A đã liên lac với B được ròi, nhưng mà A muốn lấy product, muốn lấy category,...B lại cần gọi đến Z để cần một số điều kiện, sau đó mới phản hồi cho A  => B phải nhớ cách gọi đến Z như nào, nếu như Z co nhieu clone => co nhieu port, B phai biet port nao chet, ...=> B biết quá nhiều thứ => cần api gateway (AP) giúp cho B
+=> ta có
+A -> R -> F->  DNS -> RP/LB (hoac RP -> LB) --> AP->  P ->  B.
+hoac
+A -> R -> F->  DNS -> RP/LB/AP (hoac RP -> LB) ->  P ->  B.

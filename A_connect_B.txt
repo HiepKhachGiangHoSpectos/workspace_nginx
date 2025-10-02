@@ -1,0 +1,78 @@
+TÔI LÀ MỘT NGƯỜI MỚI HỌC – gọi tôi là A. Tôi đang ở Việt Nam và muốn kết nối để nói chuyện với một người bạn bên Mỹ – gọi là B. Nghe thì tưởng đơn giản, nhưng để A nói chuyện với B qua Internet, hóa ra lại là cả một hành trình đầy chướng ngại.
+1. BÀI TOÁN ĐẦU TIÊN – ĐỊNH DANH
+
+Muốn giao tiếp, A và B cần biết mình đang nói chuyện với ai → mỗi thiết bị cần có địa chỉ IP.
+
+=> A → biết IP của B → gửi request đến B.
+
+2. NHƯNG NÓI CHUYỆN TRỰC TIẾP KHÔNG AN TOÀN
+
+- Lộ IP thật
+- Không tối ưu đường truyền
+- Không có bảo vệ trung gian
+
+=> Cần có Router (R) để định tuyến, NAT, chuyển tiếp dữ liệu.
+
+=> A → R → B
+
+3. NHỚ IP THÌ RẤT KHÓ → CẦN DNS
+
+Con người nhớ tên, không nhớ số → cần hệ thống chuyển tên miền thành IP → DNS (Domain Name System)
+
+=> A → R → DNS → IP của B → gửi request
+
+4. A BỊ QUẢN LÝ BỞI NGƯỜI GIÁM SÁT
+
+A dùng mạng của công ty/trường học, bị giới hạn nội dung → cần proxy để kiểm soát
+
+=> Forward Proxy (F)
+
+=> A → R → F → DNS → B
+
+5. PHÍA B ĐƯỢC BACKEND (P) QUẢN LÝ
+
+B chạy trong server backend như Node.js, PHP,...
+
+=> A → R → F → DNS → P → B
+
+6. A MUỐN KẾT NỐI NHIỀU NGƯỜI NHƯ B, H, C,...
+
+Nhưng không quan tâm ai quản lý → cần Reverse Proxy (RP)
+
+=> A → R → F → DNS → RP → P → B
+
+7. B TRỞ NÊN NỔI TIẾNG, QUÁ TẢI REQUEST
+
+=> Nhân bản B thành nhiều instance → cần Load Balancer (LB)
+
+=> A → R → F → DNS → RP → LB → P → B
+
+8. B CẦN GỌI ĐẾN SERVICE KHÁC (Z)
+
+B gọi Z, nhưng Z có nhiều instance, port, auth,... → quá phức tạp
+
+=> Cần API Gateway (AP) giúp routing, auth, cache, retry, v.v.
+
+=> A → R → F → DNS → RP/LB → AP → P → B
+↘→ Z
+
+TÓM TẮT HỆ THỐNG:
+
+A (client)
+→ R (Router)
+→ F (Forward Proxy - chặn nội dung)
+→ DNS (tra tên miền thành IP)
+→ RP (Reverse Proxy - tiếp nhận request)
+→ LB (phân tải)
+→ AP (API Gateway - giao tiếp service)
+→ P (backend xử lý)
+→ B (người nhận request)
+
+BÀI HỌC:
+
+Một kết nối từ A đến B hóa ra là cả một hệ sinh thái phối hợp phức tạp giữa nhiều thành phần khác nhau, đảm bảo:
+
+- Đúng đích
+- Bảo mật
+- Có thể mở rộng
+- Dễ bảo trì
